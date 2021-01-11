@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configurationDescriptor version="84">
+  <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
+    <logicalFolder name="f3" displayName="GLee" projectFiles="true">
+      <itemPath>GLee.c</itemPath>
+      <itemPath>GLee.h</itemPath>
+    </logicalFolder>
+    <logicalFolder name="HeaderFiles"
+                   displayName="Header Files"
+                   projectFiles="true">
+      <itemPath>camera.h</itemPath>
+      <itemPath>error.h</itemPath>
+      <itemPath>lightmap.h</itemPath>
+      <itemPath>math3d.h</itemPath>
+      <itemPath>opengl.h</itemPath>
+      <itemPath>stringcompare.h</itemPath>
+      <itemPath>tokenizer.h</itemPath>
+      <itemPath>vector3.h</itemPath>
+    </logicalFolder>
+    <logicalFolder name="f2" displayName="Loader" projectFiles="true">
+      <itemPath>resources.h</itemPath>
+      <itemPath>textureloader.cpp</itemPath>
+      <itemPath>textureloader.h</itemPath>
+      <itemPath>wadloader.cpp</itemPath>
+      <itemPath>wadloader.h</itemPath>
+      <itemPath>worldloader.cpp</itemPath>
+      <itemPath>worldloader.h</itemPath>
+    </logicalFolder>
+    <logicalFolder name="f1" displayName="Renderer" projectFiles="true">
+      <itemPath>entitymanager.cpp</itemPath>
+      <itemPath>entitymanager.h</itemPath>
+      <itemPath>interfaces.h</itemPath>
+      <itemPath>physics.cpp</itemPath>
+      <itemPath>physics.h</itemPath>
+      <itemPath>shadermanager.cpp</itemPath>
+      <itemPath>shadermanager.h</itemPath>
+      <itemPath>skyrenderer.cpp</itemPath>
+      <itemPath>skyrenderer.h</itemPath>
+      <itemPath>staticrenderer.cpp</itemPath>
+      <itemPath>staticrenderer.h</itemPath>
+      <itemPath>types.h</itemPath>
+      <itemPath>worldrenderer.cpp</itemPath>
+      <itemPath>worldrenderer.h</itemPath>
+    </logicalFolder>
+    <logicalFolder name="SourceFiles"
+                   displayName="Source Files"
+                   projectFiles="true">
+      <itemPath>camera.cpp</itemPath>
+      <itemPath>error.cpp</itemPath>
+      <itemPath>lightmap.cpp</itemPath>
+      <itemPath>main.cpp</itemPath>
+      <itemPath>stringcompare.cpp</itemPath>
+      <itemPath>targa.cpp</itemPath>
+      <itemPath>tokenizer.cpp</itemPath>
+      <itemPath>vector3.cpp</itemPath>
+    </logicalFolder>
+    <logicalFolder name="ExternalFiles"
+                   displayName="Important Files"
+                   projectFiles="false">
+      <itemPath>Makefile</itemPath>
+    </logicalFolder>
+  </logicalFolder>
+  <projectmakefile>Makefile</projectmakefile>
+  <confs>
+    <conf name="Debug" type="1">
+      <toolsSet>
+        <remote-sources-mode>LOCAL_SOURCES</remote-sources-mode>
+        <compilerSet>default</compilerSet>
+        <dependencyChecking>false</dependencyChecking>
+      </toolsSet>
+      <compileType>
+        <ccTool>
+          <incDir>
+            <pElem>../../../../../compilers/glsdk_0.4.1/glfw/include</pElem>
+          </incDir>
+        </ccTool>
+        <linkerTool>
+          <linkerAddLib>
+            <pElem>../../../../../compilers/glsdk_0.4.1/glfw/library</pElem>
+          </linkerAddLib>
+          <linkerLibItems>
+            <linkerLibLibItem>glfw</linkerLibLibItem>
+            <linkerLibLibItem>GL</linkerLibLibItem>
+            <linkerLibLibItem>GLU</linkerLibLibItem>
+          </linkerLibItems>
+        </linkerTool>
+      </compileType>
+    </conf>
+    <conf name="Release" type="1">
+      <toolsSet>
+        <remote-sources-mode>LOCAL_SOURCES</remote-sources-mode>
+        <compilerSet>MinGW|MinGW</compilerSet>
+        <dependencyChecking>false</dependencyChecking>
+      </toolsSet>
+      <compileType>
+        <cTool>
+          <developmentMode>5</developmentMode>
+        </cTool>
+        <ccTool>
+          <developmentMode>5</developmentMode>
+          <architecture>1</architecture>
+        </ccTool>
+        <fortranCompilerTool>
+          <developmentMode>5</developmentMode>
+        </fortranCompilerTool>
+      </compileType>
+    </conf>
+    <conf name="linuxDebug" type="1">
+      <toolsSet>
+        <remote-sources-mode>LOCAL_SOURCES</remote-sources-mode>
+        <compilerSet>GNU|GNU</compilerSet>
+      </toolsSet>
+      <compileType>
+        <ccTool>
+          <incDir>
+            <pElem>/home/wouter/Code/NetBeansProjects/Game/trunk/libs/linux/glfw/include</pElem>
+            <pElem>/usr/include/freetype2</pElem>
+            <pElem>/home/wouter/Downloads/Code/Bullet/bullet-2.73/src</pElem>
+          </incDir>
+        </ccTool>
+        <linkerTool>
+          <linkerAddLib>
+            <pElem>/home/wouter/Code/NetBeansProjects/Game/trunk/libs/linux/glfw/lib</pElem>
+            <pElem>/home/wouter/Downloads/Code/Bullet/bullet-2.73/src</pElem>
+          </linkerAddLib>
+          <linkerLibItems>
+            <linkerLibLibItem>glfw</linkerLibLibItem>
+            <linkerLibLibItem>GLU</linkerLibLibItem>
+            <linkerLibLibItem>Xrandr</linkerLibLibItem>
+            <linkerLibLibItem>pthread</linkerLibLibItem>
+            <linkerLibLibItem>freetype</linkerLibLibItem>
+            <linkerLibLibItem>ode</linkerLibLibItem>
+            <linkerLibLibItem>bulletdynamics</linkerLibLibItem>
+            <linkerLibLibItem>bulletmath</linkerLibLibItem>
+            <linkerLibLibItem>bulletcollision</linkerLibLibItem>
+            <linkerLibLibItem>bulletsoftbody</linkerLibLibItem>
+          </linkerLibItems>
+        </linkerTool>
+      </compileType>
+    </conf>
+  </confs>
+</configurationDescriptor>
