@@ -6,9 +6,11 @@
  */
 
 #include "wadloader.h"
+
 #include "stringcompare.h"
 #include <string.h>
 #include <iostream>
+
 using namespace std;
 
 WADLoader::WADLoader(const IData* data, const char* filename)
@@ -34,7 +36,7 @@ const unsigned char* WADLoader::getTextureData(const char* name) const
         str r = { name };
         if (l == r)
         {
-            return this->mData->data + this->mLumps[i].offset;
+            return this->mData->Data() + this->mLumps[i].offset;
         }
     }
     return NULL;

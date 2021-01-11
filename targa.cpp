@@ -18,9 +18,12 @@ typedef struct sTGAHeader
 
 #pragma pack()
 
-bool openTarga(Texture& texture, const IData* data, const char* filename)
+bool openTarga(
+    Texture& texture,
+    const IData* data,
+    const std::string& filename)
 {
-    tTGAHeader* header = (tTGAHeader*)data->data;
+    tTGAHeader* header = (tTGAHeader*)data->Data();
 
     texture.bpp = header->pixelSize >> 3;
     texture.width = header->width;
@@ -28,7 +31,7 @@ bool openTarga(Texture& texture, const IData* data, const char* filename)
     int newDataSize = header->width * header->height * texture.bpp;
     texture.data[0] = new unsigned char[newDataSize];
     memset(texture.data[0], 155, newDataSize);
-    unsigned char* imageData = data->data + sizeof(tTGAHeader) + header->idLength;
+    unsigned char* imageData = data->Data() + sizeof(tTGAHeader) + header->idLength;
 
     if (header->imageType == 9 || header->imageType == 10 || header->imageType == 11)
     {
@@ -51,7 +54,7 @@ bool openTarga(Texture& texture, const IData* data, const char* filename)
     else
     {
         // Uncompressed data
-        if (data->dataSize >= sizeof(tTGAHeader) + header->idLength + newDataSize)
+        if (data->DataSize() >= sizeof(tTGAHeader) + header->idLength + newDataSize)
         {
             memcpy(texture.data[0], imageData, newDataSize);
         }
@@ -86,5 +89,6 @@ bool openTarga(Texture& texture, const IData* data, const char* filename)
 
         delete []temp;
     }
+
     return false;
 }

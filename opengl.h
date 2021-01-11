@@ -8,12 +8,9 @@
 #ifndef _OPENGL_H
 #define	_OPENGL_H
 
-#ifdef WIN32
-#include "GLee.h"
-#endif
+#include <glad/glad.h>
 
-#include <GL/glfw.h>
-#include <GL/gl.h>
+#include <GLFW/glfw3.h>
 
 #endif	/* _OPENGL_H */
 

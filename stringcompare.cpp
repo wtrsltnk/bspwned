@@ -1,4 +1,5 @@
 #include "stringcompare.h"
+
 #include <string.h>
 #include <ctype.h>
 

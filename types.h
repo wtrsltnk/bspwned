@@ -42,7 +42,7 @@
 #define PLANE_ANYY 4
 #define PLANE_ANYZ 5
 
-#pragma pack(4)
+#pragma pack(push, 4)
 
 /* BSP */
 typedef struct sBSPLump
@@ -265,6 +265,8 @@ typedef struct sFace
     Texture* lightmap;
 
 } tFace;
+
+#pragma pack(pop)
 
 #endif	/* _BSP_TYPES_H */
 

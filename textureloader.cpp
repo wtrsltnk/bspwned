@@ -6,6 +6,7 @@
  */
 
 #include "textureloader.h"
+
 #include "interfaces.h"
 #include "entitymanager.h"
 #include "types.h"
@@ -75,6 +76,8 @@ bool TextureLoader::getWadTexture(Texture& texture, unsigned char* textureData)
 {
     tBSPMipTexHeader* header = (tBSPMipTexHeader*)textureData;
 
+    texture.name = header->name;
+
     if (header->offsets[0] == 0)
     {
         for (vector<WADLoader*>::const_iterator itr = pimpl->mWadFiles.begin(); itr != pimpl->mWadFiles.end(); ++itr)
@@ -107,8 +110,7 @@ bool TextureLoader::PIMPL::readTexture(Texture& texture, const unsigned char* da
     const unsigned char* source3 = data + miptex->offsets[3];
     const unsigned char* palette = data + paletteOffset;
 
-    texture.name = new char[strlen(miptex->name) + 1];
-    strcpy(texture.name, miptex->name);
+    texture.name = miptex->name;
     texture.width = miptex->width;
     texture.height = miptex->height;
     texture.bpp = 4;
@@ -184,14 +186,14 @@ void TextureLoader::PIMPL::openWadFiles(string wadString)
             // Strip the found wadfile of its path
             string stripedWad = wad.substr(wad.find_last_of('\\') + 1);
             // Read the wad file
-            const char* wadFile = mResources->findFile(stripedWad.c_str());
+            auto wadFile = mResources->findFile(stripedWad.c_str());
             // Add it to the wad list if it is not NULL
-            if (wadFile != NULL)
+            if (!wadFile.empty())
             {
                 const IData* data = mResources->openFile(wadFile);
                 if (data != NULL)
                 {
-                    mWadFiles.push_back(new WADLoader(data, wadFile));
+                    mWadFiles.push_back(new WADLoader(data, wadFile.c_str()));
                 }
                 else
                 {

@@ -6,10 +6,11 @@
  */
 
 #include "staticrenderer.h"
+
 #include "opengl.h"
 #include "shadermanager.h"
-#include <vector>
 #include <iostream>
+#include <vector>
 
 using namespace std;
 
@@ -22,21 +23,21 @@ class StaticRenderer::PIMPL
 public:
     int mVertexCount;
     int mAllocVertexCount;
-    tVertex* mVertices;
+    tVertex *mVertices;
 
     int mFaceCount;
-    tFace* mFaces;
+    tFace *mFaces;
 
     int mShaderCount;
 
     bool mTexturesEnabled;
     bool mLightmapEnabled;
 
-    void renderFace(const tFace* face);
+    void renderFace(const tFace *face);
 };
 
 StaticRenderer::StaticRenderer()
-        : pimpl(new StaticRenderer::PIMPL())
+    : pimpl(new StaticRenderer::PIMPL())
 {
     pimpl->mVertexCount = 0;
     pimpl->mAllocVertexCount = LIST_BLOCK;
@@ -52,10 +53,10 @@ StaticRenderer::StaticRenderer()
 StaticRenderer::~StaticRenderer()
 {
     if (pimpl->mVertices != NULL)
-        delete []pimpl->mVertices;
+        delete[] pimpl->mVertices;
 
     if (pimpl->mFaces != NULL)
-        delete []pimpl->mFaces;
+        delete[] pimpl->mFaces;
 
     delete pimpl;
 }
@@ -79,7 +80,7 @@ void StaticRenderer::setFaceCount(int count)
     pimpl->mFaceCount = count;
 
     if (pimpl->mFaces != NULL)
-        delete []pimpl->mFaces;
+        delete[] pimpl->mFaces;
     pimpl->mFaces = NULL;
 
     if (pimpl->mFaceCount > 0)
@@ -101,12 +102,12 @@ int StaticRenderer::getShaderCount() const
     return pimpl->mShaderCount;
 }
 
-void StaticRenderer::addVertex(const tVertex& vertex)
+void StaticRenderer::addVertex(const tVertex &vertex)
 {
     if (pimpl->mVertexCount + 1 > pimpl->mAllocVertexCount)
     {
         pimpl->mAllocVertexCount += LIST_BLOCK;
-        tVertex* tmp = new tVertex[pimpl->mAllocVertexCount];
+        tVertex *tmp = new tVertex[pimpl->mAllocVertexCount];
         for (int i = 0; i < pimpl->mVertexCount; i++)
             tmp[i] = pimpl->mVertices[i];
         delete pimpl->mVertices;
@@ -120,7 +121,7 @@ int StaticRenderer::getCurrentVertex() const
     return pimpl->mVertexCount;
 }
 
-void StaticRenderer::setFace(const tFace& face, int index)
+void StaticRenderer::setFace(const tFace &face, int index)
 {
     if (index >= 0 && index < pimpl->mFaceCount)
     {
@@ -128,17 +129,17 @@ void StaticRenderer::setFace(const tFace& face, int index)
     }
 }
 
-const tFace& StaticRenderer::getFace(int index) const
+const tFace &StaticRenderer::getFace(int index) const
 {
     return pimpl->mFaces[index];
 }
 
 void StaticRenderer::renderAllFaces()
 {
-    ShaderManager* shaderManager = ShaderManager::singleton();
+    ShaderManager *shaderManager = ShaderManager::singleton();
     for (int i = 0; i < pimpl->mFaceCount; i++)
     {
-        tFace& face = pimpl->mFaces[i];
+        tFace &face = pimpl->mFaces[i];
         shaderManager->useShader(face.shaderIndex);
         pimpl->renderFace(&face);
     }
@@ -146,12 +147,12 @@ void StaticRenderer::renderAllFaces()
 
 void StaticRenderer::renderVisibleFaces(bool visibleFaces[])
 {
-    ShaderManager* shaderManager = ShaderManager::singleton();
+    ShaderManager *shaderManager = ShaderManager::singleton();
     for (int i = 0; i < pimpl->mFaceCount; i++)
     {
         if (visibleFaces[i])
         {
-            tFace& face = pimpl->mFaces[i];
+            tFace &face = pimpl->mFaces[i];
             shaderManager->useShader(face.shaderIndex);
             pimpl->renderFace(&face);
         }
@@ -161,11 +162,11 @@ void StaticRenderer::renderVisibleFaces(bool visibleFaces[])
 void StaticRenderer::renderFace(int face)
 {
     ShaderManager::singleton()->useShader(pimpl->mFaces[face].shaderIndex);
-    
+
     pimpl->renderFace(&pimpl->mFaces[face]);
 }
 
-void StaticRenderer::PIMPL::renderFace(const tFace* face)
+void StaticRenderer::PIMPL::renderFace(const tFace *face)
 {
     if (mLightmapEnabled)
     {
@@ -192,7 +193,7 @@ void StaticRenderer::textureRenderSetup()
         glEnable(GL_TEXTURE_2D);
     else
         glDisable(GL_TEXTURE_2D);
-    
+
     glActiveTexture(GL_TEXTURE1);
     if (pimpl->mLightmapEnabled)
         glEnable(GL_TEXTURE_2D);
@@ -200,9 +201,9 @@ void StaticRenderer::textureRenderSetup()
         glDisable(GL_TEXTURE_2D);
 }
 
-bool StaticRenderer::testFaceVisibility(const tFace& face)
+bool StaticRenderer::testFaceVisibility(const tFace &face)
 {
-    const tShader* shader = ShaderManager::singleton()->getShader(face.shaderIndex);
+    const tShader *shader = ShaderManager::singleton()->getShader(face.shaderIndex);
     if (shader->flags & SHADER_FLAG_SPECIALTEXTURE)
         return false;
 

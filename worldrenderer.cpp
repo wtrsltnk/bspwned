@@ -6,6 +6,7 @@
  */
 
 #include "worldrenderer.h"
+
 #include "opengl.h"
 #include "math3d.h"
 #include <string.h>

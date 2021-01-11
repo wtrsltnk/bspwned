@@ -6,6 +6,7 @@
  */
 
 #include "skyrenderer.h"
+
 #include "opengl.h"
 
 #define SKY_FRONT  (1<<0)

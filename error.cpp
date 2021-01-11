@@ -6,6 +6,7 @@
  */
 
 #include "error.h"
+
 #include <string.h>
 
 Error::Error()

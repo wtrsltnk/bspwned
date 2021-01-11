@@ -8,7 +8,7 @@
 #ifndef _BSPCONTENT_H
 #define	_BSPCONTENT_H
 
-#include "bsptypes.h"
+#include "types.h"
 #include "interfaces.h"
 #include "indexarray.h"
 #include <vector>

@@ -1,4 +1,5 @@
 #include "lightmap.h"
+
 #include <math.h>
 #include <memory.h>
 //

@@ -6,6 +6,7 @@
  */
 
 #include "entitymanager.h"
+
 #include <iostream>
 #include <vector>
 #include <string>
@@ -24,8 +25,8 @@ public:
 };
 
 EntityManager::EntityManager()
-        : pimpl(new EntityManager::PIMPL())
 {
+    this->pimpl = new EntityManager::PIMPL();
 }
 
 EntityManager::~EntityManager()

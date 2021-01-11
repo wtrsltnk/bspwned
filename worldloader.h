@@ -28,7 +28,7 @@ public:
     WorldLoader(const Config& config);
     virtual ~WorldLoader();
 
-    bool loadBSP(const char* filename, WorldRenderer& renderer);
+    bool loadBSP(const std::string& filename, WorldRenderer& renderer);
     bool loadEntities(const IData* bsp, const tBSPHeader& header, WorldRenderer& renderer);
     bool loadFaces(const IData* bsp, const tBSPHeader& header, WorldRenderer& renderer);
     bool loadVisiblity(const IData* bsp, const tBSPHeader& header, WorldRenderer& renderer);

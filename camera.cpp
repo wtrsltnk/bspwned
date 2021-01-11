@@ -1,4 +1,5 @@
 #include "camera.h"
+
 #include "opengl.h"
 #include <math.h>
 
@@ -27,13 +28,13 @@ Camera::~Camera()
 void Camera::Update()
 {
     // Reset the view matrix to identity(no transformations)
-    ::glLoadIdentity();
+    glLoadIdentity();
 
     // First rotate the sceen around the origin. This makes this camera rotate around it's position
-    ::glMultMatrixf(this->rotationMatrix);
+    glMultMatrixf(this->rotationMatrix);
 
     // Then move the camera to the correct position in space
-    ::glTranslatef(this->position[0], this->position[1], this->position[2]);
+    glTranslatef(this->position[0], this->position[1], this->position[2]);
 }
 
 void Camera::SetPosition(float position[3])

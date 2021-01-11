@@ -6,6 +6,7 @@
  */
 
 #include "vector3.h"
+
 #include <math.h>
 
 Vector3::Vector3()
@@ -76,14 +77,22 @@ Vector3::operator const float* () const
 
 const Vector3& Vector3::operator = (const Vector3& v)
 {
-	for (int i = 0; i < 3; i++)
-		this->mVector[i] = v.mVector[i];
+    for (int i = 0; i < 3; i++)
+    {
+        this->mVector[i] = v.mVector[i];
+    }
+
+    return *this;
 }
 
 const Vector3& Vector3::operator = (const float v[3])
 {
-	for (int i = 0; i < 3; i++)
-		this->mVector[i] = v[i];
+    for (int i = 0; i < 3; i++)
+    {
+        this->mVector[i] = v[i];
+    }
+
+    return *this;
 }
 
 bool Vector3::operator == (const Vector3& v)
