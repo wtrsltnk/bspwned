@@ -18,6 +18,7 @@ target_sources(Bspwned
         error.cpp
         error.h
         glad.c
+        include/stb_image.h
         interfaces.h
         lightmap.cpp
         lightmap.h
@@ -34,6 +35,7 @@ target_sources(Bspwned
         skyrenderer.h
         staticrenderer.cpp
         staticrenderer.h
+        stb_image.cpp
         stringcompare.cpp
         stringcompare.h
         targa.cpp

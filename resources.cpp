@@ -1,5 +1,9 @@
 #include "resources.h"
 
+#include <algorithm>
+#include <spdlog/spdlog.h>
+#include <stb_image.h>
+
 ResourceFile::ResourceFile(
     const std::string &filename)
 {
@@ -58,9 +62,11 @@ IData *ResourceFile::copy() const
 }
 
 ResourceManager::ResourceManager(
-    const std::string &wadRoot)
+    const std::string &wadRoot,
+    const std::string &mod)
 {
     _wadRoot = std::filesystem::path(wadRoot);
+    _mod = mod;
 }
 
 ResourceManager::~ResourceManager() = default;
@@ -68,11 +74,16 @@ ResourceManager::~ResourceManager() = default;
 std::string ResourceManager::findFile(
     const std::string &name)
 {
-    std::string findName;
+    std::filesystem::path result;
 
-    if (findFileInFolder(_wadRoot, name, findName))
+    if (findFileInFolder(_wadRoot / std::filesystem::path(_mod), name, result))
     {
-        return findName;
+        return result.string();
+    }
+
+    if (findFileInFolder(_wadRoot / std::filesystem::path("valve"), name, result))
+    {
+        return result.string();
     }
 
     return "";
@@ -107,52 +118,91 @@ bool ResourceManager::openFileAsTexture(
     Texture &texture,
     const std::string &filename)
 {
-    bool result = false;
-    auto foundFile = std::filesystem::path(findFile(filename));
+    auto foundFile = findFile(filename);
 
     if (foundFile.empty())
     {
         return false;
     }
 
-    const IData *file = openFile(foundFile.generic_string());
+    const IData *file = openFile(foundFile);
 
     if (file == NULL)
     {
         return false;
     }
 
-    if (foundFile.extension() == ".tga")
+    auto extension = std::filesystem::path(foundFile).extension();
+
+    if (extension == ".tga" || extension == ".bmp")
     {
-        result = openTarga(texture, file, foundFile.generic_string());
+        int x, y, n;
+        unsigned char *data = stbi_load(foundFile.c_str(), &x, &y, &n, 0);
+        if (data != nullptr)
+        {
+            texture.data[0] = data;
+            texture.width = x;
+            texture.height = y;
+            texture.bpp = n;
+            texture.repeat = false;
+
+            closeFile(file);
+
+            return true;
+        }
     }
 
     closeFile(file);
 
-    return true;
+    return false;
 }
 
 void ResourceManager::closeFile(
     const IData *file)
 {
     ResourceFile *listFile = files[file->name];
-    if (listFile != NULL)
+
+    if (listFile == nullptr)
     {
-        listFile->ref--;
-        if (listFile->ref == 0)
+        return;
+    }
+
+    listFile->ref--;
+
+    if (listFile->ref == 0)
+    {
+        files.erase(file->name);
+        delete listFile;
+    }
+}
+
+bool iequals(
+    const std::string &a,
+    const std::string &b)
+{
+    unsigned int sz = a.size();
+
+    if (b.size() != sz)
+    {
+        return false;
+    }
+
+    for (unsigned int i = 0; i < sz; ++i)
+    {
+        if (tolower(a[i]) != tolower(b[i]))
         {
-            files.erase(file->name);
-            delete listFile;
+            return false;
         }
     }
+
+    return true;
 }
 
 bool ResourceManager::findFileInFolder(
     const std::filesystem::path &dir,
     const std::string &file,
-    std::string &result)
+    std::filesystem::path &result)
 {
-    bool found = false;
     std::string strFile = file;
 
     if (!std::filesystem::exists(dir))
@@ -164,37 +214,49 @@ bool ResourceManager::findFileInFolder(
     {
         if (p.is_directory())
         {
-            if (findFileInFolder(p.path().generic_string(), file, result))
+            if (findFileInFolder(p.path(), file, result))
             {
                 return true;
             }
         }
         else
         {
-            if (p.path().filename().generic_string() == std::string(file))
+            std::string a = p.path().filename().string();
+            std::string b = std::filesystem::path(file).filename().string();
+
+            if (!iequals(a, b))
             {
-                result = p.path().generic_string();
-                return true;
+                continue;
             }
+
+            result = p.path();
+
+            return true;
         }
     }
 
     return false;
 }
 
-unsigned int ResourceManager::addTexture(const Texture &texture)
+unsigned int ResourceManager::addTexture(
+    const Texture &texture)
 {
     GLuint renderIndex = 0;
     GLuint format = GL_RGB;
 
     switch (texture.bpp)
     {
+        default:
         case 3:
+        {
             format = GL_RGB;
             break;
+        }
         case 4:
+        {
             format = GL_RGBA;
             break;
+        }
     }
 
     glGenTextures(1, &renderIndex);
@@ -210,26 +272,13 @@ unsigned int ResourceManager::addTexture(const Texture &texture)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
     }
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_NEAREST);
 
-    if (texture.mipmapping)
-    {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 4);
-    }
-    else
-    {
-        glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
-    }
+    glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
 
     glTexImage2D(GL_TEXTURE_2D, 0, format, texture.width, texture.height, 0, format, GL_UNSIGNED_BYTE, texture.data[0]);
-    if (texture.mipmapping)
-    {
-        glTexImage2D(GL_TEXTURE_2D, 1, format, texture.width / 2, texture.height / 2, 0, format, GL_UNSIGNED_BYTE, texture.data[1]);
-        glTexImage2D(GL_TEXTURE_2D, 2, format, texture.width / 8, texture.height / 8, 0, format, GL_UNSIGNED_BYTE, texture.data[2]);
-        glTexImage2D(GL_TEXTURE_2D, 3, format, texture.width / 32, texture.height / 32, 0, format, GL_UNSIGNED_BYTE, texture.data[3]);
-    }
 
     return renderIndex;
 }

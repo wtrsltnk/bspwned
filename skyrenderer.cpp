@@ -33,25 +33,31 @@ void SkyRenderer::render(const float position[3])
 
     glActiveTexture(GL_TEXTURE1);
     glDisable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, 0);
 
     glActiveTexture(GL_TEXTURE0);
     glEnable(GL_TEXTURE_2D);
-
     glBindTexture(GL_TEXTURE_2D, 0);
+
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
     glPushMatrix();
     glTranslatef(position[0], position[1], position[2]);
     glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
+
+    // here we make up for the half of pixel to get the sky textures really stitched together because clamping is not enough
+    const float uv_1 = 255.0f / 256.0f;
+    const float uv_0 = 1.0f - uv_1;
+
     //"bk", "dn", "ft", "lf", "rt", "up"
     if (renderFlag & SKY_FRONT)
     {
         glBindTexture(GL_TEXTURE_2D, mTextures[2].glIndex);
         glBegin(GL_QUADS);
-        glTexCoord2f(0.0f, 0.0f); glVertex3f(size, size, -size);
-        glTexCoord2f(0.0f, 1.0f); glVertex3f(size, -size, -size);
-        glTexCoord2f(1.0f, 1.0f); glVertex3f(-size, -size, -size);
-        glTexCoord2f(1.0f, 0.0f); glVertex3f(-size, size, -size);
+        glTexCoord2f(uv_0, uv_0); glVertex3f(size, size, -size);
+        glTexCoord2f(uv_0, uv_1); glVertex3f(size, -size, -size);
+        glTexCoord2f(uv_1, uv_1); glVertex3f(-size, -size, -size);
+        glTexCoord2f(uv_1, uv_0); glVertex3f(-size, size, -size);
         glEnd();
     }
 
@@ -59,10 +65,10 @@ void SkyRenderer::render(const float position[3])
     {
         glBindTexture(GL_TEXTURE_2D, mTextures[0].glIndex);
         glBegin(GL_QUADS);
-        glTexCoord2f(0.0f, 0.0f); glVertex3f(-size, size, size);
-        glTexCoord2f(0.0f, 1.0f); glVertex3f(-size, -size, size);
-        glTexCoord2f(1.0f, 1.0f); glVertex3f(size, -size, size);
-        glTexCoord2f(1.0f, 0.0f); glVertex3f(size, size, size);
+        glTexCoord2f(uv_0, uv_0); glVertex3f(-size, size, size);
+        glTexCoord2f(uv_0, uv_1); glVertex3f(-size, -size, size);
+        glTexCoord2f(uv_1, uv_1); glVertex3f(size, -size, size);
+        glTexCoord2f(uv_1, uv_0); glVertex3f(size, size, size);
         glEnd();
     }
 
@@ -71,10 +77,10 @@ void SkyRenderer::render(const float position[3])
     {
         glBindTexture(GL_TEXTURE_2D, mTextures[3].glIndex);
         glBegin(GL_QUADS);
-        glTexCoord2f(0.0f, 0.0f); glVertex3f(-size, size, -size);
-        glTexCoord2f(0.0f, 1.0f); glVertex3f(-size, -size, -size);
-        glTexCoord2f(1.0f, 1.0f); glVertex3f(-size, -size, size);
-        glTexCoord2f(1.0f, 0.0f); glVertex3f(-size, size, size);
+        glTexCoord2f(uv_0, uv_0); glVertex3f(-size, size, -size);
+        glTexCoord2f(uv_0, uv_1); glVertex3f(-size, -size, -size);
+        glTexCoord2f(uv_1, uv_1); glVertex3f(-size, -size, size);
+        glTexCoord2f(uv_1, uv_0); glVertex3f(-size, size, size);
         glEnd();
     }
 
@@ -83,10 +89,10 @@ void SkyRenderer::render(const float position[3])
     {
         glBindTexture(GL_TEXTURE_2D, mTextures[4].glIndex);
         glBegin(GL_QUADS);
-        glTexCoord2f(1.0f, 1.0f); glVertex3f(size, -size, -size);
-        glTexCoord2f(1.0f, 0.0f); glVertex3f(size, size, -size);
-        glTexCoord2f(0.0f, 0.0f); glVertex3f(size, size, size);
-        glTexCoord2f(0.0f, 1.0f); glVertex3f(size, -size, size);
+        glTexCoord2f(uv_1, uv_1); glVertex3f(size, -size, -size);
+        glTexCoord2f(uv_1, uv_0); glVertex3f(size, size, -size);
+        glTexCoord2f(uv_0, uv_0); glVertex3f(size, size, size);
+        glTexCoord2f(uv_0, uv_1); glVertex3f(size, -size, size);
         glEnd();
     }
 
@@ -95,10 +101,10 @@ void SkyRenderer::render(const float position[3])
     {
         glBindTexture(GL_TEXTURE_2D, mTextures[1].glIndex);
         glBegin(GL_QUADS);
-        glTexCoord2f(0.0f, 1.0f); glVertex3f(-size, -size, size);
-        glTexCoord2f(1.0f, 1.0f); glVertex3f(-size, -size, -size);
-        glTexCoord2f(1.0f, 0.0f); glVertex3f(size, -size, -size);
-        glTexCoord2f(0.0f, 0.0f); glVertex3f(size, -size, size);
+        glTexCoord2f(uv_0, uv_1); glVertex3f(-size, -size, size);
+        glTexCoord2f(uv_1, uv_1); glVertex3f(-size, -size, -size);
+        glTexCoord2f(uv_1, uv_0); glVertex3f(size, -size, -size);
+        glTexCoord2f(uv_0, uv_0); glVertex3f(size, -size, size);
         glEnd();
     }
 
@@ -107,10 +113,10 @@ void SkyRenderer::render(const float position[3])
     {
         glBindTexture(GL_TEXTURE_2D, mTextures[5].glIndex);
         glBegin(GL_QUADS);
-        glTexCoord2f(1.0f, 0.0f); glVertex3f(-size, size, -size);
-        glTexCoord2f(0.0f, 0.0f); glVertex3f(-size, size, size);
-        glTexCoord2f(0.0f, 1.0f); glVertex3f(size, size, size);
-        glTexCoord2f(1.0f, 1.0f); glVertex3f(size, size, -size);
+        glTexCoord2f(uv_1, uv_0); glVertex3f(-size, size, -size);
+        glTexCoord2f(uv_0, uv_0); glVertex3f(-size, size, size);
+        glTexCoord2f(uv_0, uv_1); glVertex3f(size, size, size);
+        glTexCoord2f(uv_1, uv_1); glVertex3f(size, size, -size);
         glEnd();
     }
     glPopMatrix();

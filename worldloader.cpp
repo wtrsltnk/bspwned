@@ -25,19 +25,19 @@ WorldLoader::WorldLoader(
     const Config &config)
     : mConfig(config),
       mFaceCount(0),
-      mFaces(NULL),
-      mShaderIndices(NULL)
+      mFaces(nullptr),
+      mShaderIndices(nullptr)
 {
 }
 
 WorldLoader::~WorldLoader()
 {
-    if (this->mFaces != NULL)
+    if (this->mFaces != nullptr)
     {
         delete[] mFaces;
     }
 
-    if (this->mShaderIndices != NULL)
+    if (this->mShaderIndices != nullptr)
     {
         delete[] mShaderIndices;
     }
@@ -47,7 +47,7 @@ bool WorldLoader::loadBSP(
     const std::string &filename,
     WorldRenderer &renderer)
 {
-    if (this->mConfig.resourceManager == NULL)
+    if (this->mConfig.resourceManager == nullptr)
     {
         setError("No resource manager to load resources from");
         return false;
@@ -55,7 +55,7 @@ bool WorldLoader::loadBSP(
 
     IData *bsp = this->mConfig.resourceManager->openFile(filename);
 
-    if (bsp == NULL)
+    if (bsp == nullptr)
     {
         setError("Cannot load file");
         return false;
@@ -115,6 +115,7 @@ bool WorldLoader::loadBSP(
 
     // Make sure we close the file
     this->mConfig.resourceManager->closeFile(bsp);
+
     return true;
 }
 
@@ -178,7 +179,7 @@ bool WorldLoader::loadShaders(
     WorldRenderer &renderer)
 {
     // Load the tex info data from the BSP in a buffer
-    tBSPTexInfo *texinfos = NULL;
+    tBSPTexInfo *texinfos = nullptr;
     loadLump(&texinfos, header.lumps[HL1_BSP_TEXINFOLUMP], bsp);
 
     // Parse all the value-key pairs in the entity to find render properties for models
@@ -250,28 +251,28 @@ bool WorldLoader::loadFaces(
     WorldRenderer &renderer)
 {
     // Load the face data from the BSP in a buffer
-    tBSPFace *faces = NULL;
+    tBSPFace *faces = nullptr;
     int faceCount = loadLump(&faces, header.lumps[HL1_BSP_FACELUMP], bsp);
     renderer.mStaticRenderer.setFaceCount(faceCount);
 
     // Load the tex info data from the BSP in a buffer
-    tBSPTexInfo *texinfos = NULL;
+    tBSPTexInfo *texinfos = nullptr;
     loadLump(&texinfos, header.lumps[HL1_BSP_TEXINFOLUMP], bsp);
 
     // Load the vertex data from the BSP in a buffer
-    tBSPVertex *vertices = NULL;
+    tBSPVertex *vertices = nullptr;
     loadLump(&vertices, header.lumps[HL1_BSP_VERTEXLUMP], bsp);
 
     // Load the surfedges data from the BSP in a buffer
-    int *surfedges = NULL;
+    int *surfedges = nullptr;
     loadLump(&surfedges, header.lumps[HL1_BSP_SURFEDGELUMP], bsp);
 
     // Load the edge data from the BSP in a buffer
-    tBSPEdge *edges = NULL;
+    tBSPEdge *edges = nullptr;
     loadLump(&edges, header.lumps[HL1_BSP_EDGELUMP], bsp);
 
     // Load the light data from the BSP in a buffer
-    unsigned char *lightData = NULL;
+    unsigned char *lightData = nullptr;
     loadLump(&lightData, header.lumps[HL1_BSP_LIGHTINGLUMP], bsp);
 
     // Setup al the faces we are going to render for this BSP
@@ -312,7 +313,7 @@ bool WorldLoader::loadFaces(
         }
 
         // Use the texture(if available) to determine some necessary information
-        if (texture != NULL)
+        if (texture != nullptr)
         {
             is = 1.0f / float(texture->width);
             it = 1.0f / float(texture->height);
@@ -393,7 +394,7 @@ bool WorldLoader::loadVisiblity(
     WorldRenderer &renderer)
 {
     // Load the visibility data into a temporary buffer
-    unsigned char *buffer = NULL;
+    unsigned char *buffer = nullptr;
     loadLump(&buffer, header.lumps[HL1_BSP_VISIBILITYLUMP], bsp);
 
     // Create the Possible Visible Set list
@@ -436,7 +437,7 @@ bool WorldLoader::loadVisiblity(
         else
         {
             renderer.mPvs[i].size = 0;
-            renderer.mPvs[i].indices = NULL;
+            renderer.mPvs[i].indices = nullptr;
         }
 
         // Find all the indices of the models colliding this leaf
@@ -457,7 +458,7 @@ bool WorldLoader::loadVisiblity(
         else
         {
             renderer.mEntityPvs[i].size = 0;
-            renderer.mEntityPvs[i].indices = NULL;
+            renderer.mEntityPvs[i].indices = nullptr;
         }
     }
 
@@ -467,7 +468,8 @@ bool WorldLoader::loadVisiblity(
     return true;
 }
 
-bool WorldLoader::setupWorld(WorldRenderer &renderer)
+bool WorldLoader::setupWorld(
+    WorldRenderer &renderer)
 {
     // Upload all the textures for this BSP in the multi texture layer 0
     glActiveTexture(GL_TEXTURE0);
@@ -477,14 +479,14 @@ bool WorldLoader::setupWorld(WorldRenderer &renderer)
         //texture->mipmapping = true;
         texture->glIndex = this->mConfig.resourceManager->addTexture(*texture);
         delete[] texture->data[0];
-        texture->data[0] = NULL;
+        texture->data[0] = nullptr;
     }
 
     for (int i = 0; i < 6; i++)
     {
         renderer.mSkyRenderer.mTextures[i].glIndex = this->mConfig.resourceManager->addTexture(renderer.mSkyRenderer.mTextures[i]);
         delete[] renderer.mSkyRenderer.mTextures[i].data[0];
-        renderer.mSkyRenderer.mTextures[i].data[0] = NULL;
+        renderer.mSkyRenderer.mTextures[i].data[0] = nullptr;
     }
 
     // Upload all the lightmaps for all the faces in this BSP in the multi texture layer 1
@@ -503,7 +505,7 @@ bool WorldLoader::setupWorld(WorldRenderer &renderer)
 }
 
 WorldLoader::Config::Config()
-    : resourceManager(NULL)
+    : resourceManager(nullptr)
 {
 }
 

@@ -7,108 +7,114 @@
 
 #include "textureloader.h"
 
-#include "interfaces.h"
 #include "entitymanager.h"
+#include "interfaces.h"
 #include "types.h"
 #include "wadloader.h"
-#include <vector>
-#include <string>
-#include <string.h>
+#include <spdlog/fmt/fmt.h>
+#include <spdlog/spdlog.h>
 #include <stdio.h>
+#include <string.h>
+#include <string>
+#include <vector>
 
 using namespace std;
 
-class TextureLoader::PIMPL
+TextureLoader::TextureLoader(
+    IResources *resources,
+    EntityManager *entities)
 {
-public:
-    IResources* mResources;
-    EntityManager* mEntities;
+    mResources = resources;
+    mEntities = entities;
 
-    vector<WADLoader*> mWadFiles;
-
-    void openWadFiles(string wadString);
-    const char* getWadString(EntityManager* entities);
-    const char* getSkyString(EntityManager* entities);
-    bool readTexture(Texture& texture, const unsigned char* data);
-};
-
-TextureLoader::TextureLoader(IResources* resources, EntityManager* entities)
-        : pimpl(new TextureLoader::PIMPL())
-{
-    pimpl->mResources = resources;
-    pimpl->mEntities = entities;
-
-    pimpl->openWadFiles(pimpl->getWadString(entities));
+    openWadFiles(getWadString(entities));
 }
 
 TextureLoader::~TextureLoader()
 {
-    while (!pimpl->mWadFiles.empty())
+    while (!mWadFiles.empty())
     {
-        delete pimpl->mWadFiles.back();
-        pimpl->mWadFiles.pop_back();
+        delete mWadFiles.back();
+        mWadFiles.pop_back();
     }
-    delete pimpl;
 }
 
-bool TextureLoader::getSkyTextures(Texture texture[6])
+bool TextureLoader::getSkyTextures(
+    Texture texture[6])
 {
-    const char* skyname = pimpl->getSkyString(pimpl->mEntities);
+    const char *skyname = getSkyString(mEntities);
 
-    if (skyname != NULL)
+    if (skyname == nullptr)
     {
-        const char* shortNames[] = { "bk", "dn", "ft", "lf", "rt", "up" };
-        char name[32] = { 0 };
-        for (int i = 0; i < 6; i++)
+        spdlog::error("no sky to load");
+
+        return false;
+    }
+
+    const char *shortNames[] = {"bk", "dn", "ft", "lf", "rt", "up"};
+
+    for (int i = 0; i < 6; i++)
+    {
+        texture[i].repeat = false;
+
+        auto name = fmt::format("{}{}.tga", skyname, shortNames[i]);
+        if (mResources->openFileAsTexture(texture[i], name))
         {
-            sprintf(name, "%s%s.tga", skyname, shortNames[i]);
-            if (!pimpl->mResources->openFileAsTexture(texture[i], name))
-                return false;
-            texture[i].repeat = false;
+            continue;
         }
-        return true;
+
+        name = fmt::format("{}{}.bmp", skyname, shortNames[i]);
+        if (!mResources->openFileAsTexture(texture[i], name))
+        {
+            spdlog::error("failed to load sky texture {}{} as both tga and bmp", skyname, shortNames[i]);
+
+            return false;
+        }
     }
-    
-    return false;
+
+    return true;
 }
 
-bool TextureLoader::getWadTexture(Texture& texture, unsigned char* textureData)
+bool TextureLoader::getWadTexture(
+    Texture &texture,
+    unsigned char *textureData)
 {
-    tBSPMipTexHeader* header = (tBSPMipTexHeader*)textureData;
+    tBSPMipTexHeader *header = (tBSPMipTexHeader *)textureData;
 
     texture.name = header->name;
 
-    if (header->offsets[0] == 0)
+    if (header->offsets[0] != 0)
     {
-        for (vector<WADLoader*>::const_iterator itr = pimpl->mWadFiles.begin(); itr != pimpl->mWadFiles.end(); ++itr)
+        return readTexture(texture, textureData);
+    }
+
+    for (vector<WADLoader *>::const_iterator itr = mWadFiles.begin(); itr != mWadFiles.end(); ++itr)
+    {
+        WADLoader *wadFile = *itr;
+        const unsigned char *data = wadFile->getTextureData(header->name);
+        if (data != nullptr)
         {
-            WADLoader* wadFile = *itr;
-            const unsigned char* data = wadFile->getTextureData(header->name);
-            if (data != NULL)
-            {
-                return pimpl->readTexture(texture, data);
-            }
+            return readTexture(texture, data);
         }
     }
-    else
-    {
-        return pimpl->readTexture(texture, textureData);
-    }
+
     return false;
 }
 
-bool TextureLoader::PIMPL::readTexture(Texture& texture, const unsigned char* data)
+bool TextureLoader::readTexture(
+    Texture &texture,
+    const unsigned char *data)
 {
-    tBSPMipTexHeader* miptex = (tBSPMipTexHeader*)data;
+    tBSPMipTexHeader *miptex = (tBSPMipTexHeader *)data;
 
     int s = miptex->width * miptex->height;
     int paletteOffset = miptex->offsets[0] + s + (s / 4) + (s / 16) + (s / 64) + 2;
 
-    const unsigned char* source0 = data + miptex->offsets[0];
-    const unsigned char* source1 = data + miptex->offsets[1];
-    const unsigned char* source2 = data + miptex->offsets[2];
-    const unsigned char* source3 = data + miptex->offsets[3];
-    const unsigned char* palette = data + paletteOffset;
+    const unsigned char *source0 = data + miptex->offsets[0];
+    const unsigned char *source1 = data + miptex->offsets[1];
+    const unsigned char *source2 = data + miptex->offsets[2];
+    const unsigned char *source3 = data + miptex->offsets[3];
+    const unsigned char *palette = data + paletteOffset;
 
     texture.name = miptex->name;
     texture.width = miptex->width;
@@ -118,25 +124,31 @@ bool TextureLoader::PIMPL::readTexture(Texture& texture, const unsigned char* da
     texture.data[1] = new unsigned char[(s / 4) * texture.bpp];
     texture.data[2] = new unsigned char[(s / 16) * texture.bpp];
     texture.data[3] = new unsigned char[(s / 64) * texture.bpp];
-    
+
     int j0 = 0, j1 = 0, j2 = 0, j3 = 0;
     for (int i = 0; i < s; i++)
     {
         unsigned char r, g, b, a;
 
         // Level 0
-        r = palette[source0[i]*3]; g = palette[source0[i]*3 + 1]; b = palette[source0[i]*3 + 2]; a = 255;
+        r = palette[source0[i] * 3];
+        g = palette[source0[i] * 3 + 1];
+        b = palette[source0[i] * 3 + 2];
+        a = 255;
         if (r <= 5 && g <= 5 && b == 255) r = g = b = a = 0;
 
         texture.data[0][j0++] = r;
         texture.data[0][j0++] = g;
         texture.data[0][j0++] = b;
         texture.data[0][j0++] = a;
-        
+
         // Level 1
         if (i < (s / 4))
         {
-            r = palette[source1[i]*3]; g = palette[source1[i]*3 + 1]; b = palette[source1[i]*3 + 2]; a = 255;
+            r = palette[source1[i] * 3];
+            g = palette[source1[i] * 3 + 1];
+            b = palette[source1[i] * 3 + 2];
+            a = 255;
             if (r <= 5 && g <= 5 && b == 255) r = g = b = a = 0;
 
             texture.data[1][j1++] = r;
@@ -148,7 +160,10 @@ bool TextureLoader::PIMPL::readTexture(Texture& texture, const unsigned char* da
         // Level 2
         if (i < (s / 16))
         {
-            r = palette[source2[i]*3]; g = palette[source2[i]*3 + 1]; b = palette[source2[i]*3 + 2]; a = 255;
+            r = palette[source2[i] * 3];
+            g = palette[source2[i] * 3 + 1];
+            b = palette[source2[i] * 3 + 2];
+            a = 255;
             if (r <= 5 && g <= 5 && b == 255) r = g = b = a = 0;
 
             texture.data[2][j2++] = r;
@@ -160,7 +175,10 @@ bool TextureLoader::PIMPL::readTexture(Texture& texture, const unsigned char* da
         // Level 3
         if (i < (s / 64))
         {
-            r = palette[source3[i]*3]; g = palette[source3[i]*3 + 1]; b = palette[source3[i]*3 + 2]; a = 255;
+            r = palette[source3[i] * 3];
+            g = palette[source3[i] * 3 + 1];
+            b = palette[source3[i] * 3 + 2];
+            a = 255;
             if (r <= 5 && g <= 5 && b == 255) r = g = b = a = 0;
 
             texture.data[3][j3++] = r;
@@ -173,78 +191,95 @@ bool TextureLoader::PIMPL::readTexture(Texture& texture, const unsigned char* da
     return true;
 }
 
-void TextureLoader::PIMPL::openWadFiles(string wadString)
+void TextureLoader::openWadFiles(
+    const std::string &wadString)
 {
-    if (mResources != NULL)
+    if (mResources == nullptr)
     {
-	int start = 0;
-	int hit = wadString.find(';', start);
-	while (hit > -1)
-	{
-            // Pick the full wad file with path from the wads string
-            string wad = wadString.substr(start, hit-start);
-            // Strip the found wadfile of its path
-            string stripedWad = wad.substr(wad.find_last_of('\\') + 1);
-            // Read the wad file
-            auto wadFile = mResources->findFile(stripedWad.c_str());
-            // Add it to the wad list if it is not NULL
-            if (!wadFile.empty())
-            {
-                const IData* data = mResources->openFile(wadFile);
-                if (data != NULL)
-                {
-                    mWadFiles.push_back(new WADLoader(data, wadFile.c_str()));
-                }
-                else
-                {
-                    cout << "Could not open " << wadFile << endl;
-                }
-            }
+        return;
+    }
 
-            start = hit + 1;
-            hit = wadString.find(';', start);
-	}
+    int start = 0;
+    int hit = wadString.find(';', start);
+    while (hit > -1)
+    {
+        // Pick the full wad file with path from the wads string
+        std::string wad = wadString.substr(start, hit - start);
+        // Strip the found wadfile of its path
+        std::string stripedWad = wad.substr(wad.find_last_of('\\') + 1);
+        // Read the wad file
+        auto wadFile = mResources->findFile(stripedWad);
+        // Add it to the wad list if it is not NULL
+        if (!wadFile.empty())
+        {
+            const IData *data = mResources->openFile(wadFile);
+            if (data != NULL)
+            {
+                mWadFiles.push_back(new WADLoader(data, wadFile.c_str()));
+            }
+            else
+            {
+                spdlog::error("Could not open {}", wadFile);
+            }
+        }
+
+        start = hit + 1;
+        hit = wadString.find(';', start);
     }
 }
 
-const char* TextureLoader::PIMPL::getWadString(EntityManager* entities)
+const char *TextureLoader::getWadString(
+    EntityManager *entities)
 {
     int entityCount = entities->getEntityCount();
 
     for (int i = 0; i < entityCount; i++)
     {
-        const tEntity* entity = entities->getEntity(i);
-        if (strcmp(entity->className, "worldspawn") == 0)
+        const tEntity *entity = entities->getEntity(i);
+
+        if (strcmp(entity->className, "worldspawn") != 0)
         {
-            for (int j = 0; j < entity->valueCount; j++)
+            continue;
+        }
+
+        for (int j = 0; j < entity->valueCount; j++)
+        {
+            if (strcmp(entity->values[j].key, "wad") != 0)
             {
-                if (strcmp(entity->values[j].key, "wad") == 0)
-                {
-                    return entity->values[j].value;
-                }
+                continue;
             }
+
+            return entity->values[j].value;
         }
     }
-    return NULL;
+
+    return nullptr;
 }
 
-const char* TextureLoader::PIMPL::getSkyString(EntityManager* entities)
+const char *TextureLoader::getSkyString(
+    EntityManager *entities)
 {
     int entityCount = entities->getEntityCount();
 
     for (int i = 0; i < entityCount; i++)
     {
-        const tEntity* entity = entities->getEntity(i);
-        if (strcmp(entity->className, "worldspawn") == 0)
+        const tEntity *entity = entities->getEntity(i);
+
+        if (strcmp(entity->className, "worldspawn") != 0)
         {
-            for (int j = 0; j < entity->valueCount; j++)
+            continue;
+        }
+
+        for (int j = 0; j < entity->valueCount; j++)
+        {
+            if (strcmp(entity->values[j].key, "skyname") != 0)
             {
-                if (strcmp(entity->values[j].key, "skyname") == 0)
-                {
-                    return entity->values[j].value;
-                }
+                continue;
             }
+
+            return entity->values[j].value;
         }
     }
-    return NULL;
+
+    return nullptr;
 }

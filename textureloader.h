@@ -8,6 +8,9 @@
 #ifndef _TEXTURELOADER_H
 #define	_TEXTURELOADER_H
 
+#include <vector>
+#include <string>
+
 class IResources;
 class Texture;
 class EntityManager;
@@ -15,15 +18,37 @@ class EntityManager;
 class TextureLoader
 {
 public:
-    TextureLoader(IResources* resources, EntityManager* entities);
+    TextureLoader(
+        IResources* resources,
+        EntityManager* entities);
+
     virtual ~TextureLoader();
 
-    bool getWadTexture(Texture& texture, unsigned char* textureData);
-    bool getSkyTextures(Texture texture[6]);
+    bool getWadTexture(
+        Texture& texture,
+        unsigned char* textureData);
+
+    bool getSkyTextures(
+        Texture texture[6]);
     
 private:
-    class PIMPL;
-    PIMPL* pimpl;
+    IResources *mResources;
+    EntityManager *mEntities;
+
+    std::vector<class WADLoader *> mWadFiles;
+
+    void openWadFiles(
+        const std::string &wadString);
+
+    const char *getWadString(
+        EntityManager *entities);
+
+    const char *getSkyString(
+        EntityManager *entities);
+
+    bool readTexture(
+        Texture &texture,
+        const unsigned char *data);
 
 };
 

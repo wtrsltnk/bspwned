@@ -51,7 +51,8 @@ class ResourceManager : public IResources
 {
 public:
     ResourceManager(
-        const std::string &wadRoot);
+        const std::string &wadRoot,
+        const std::string &mod);
 
     virtual ~ResourceManager();
 
@@ -71,12 +72,13 @@ public:
     static bool findFileInFolder(
         const std::filesystem::path &dir,
         const std::string &file,
-        std::string &result);
+        std::filesystem::path &result);
 
     virtual unsigned int addTexture(const Texture &texture);
 
 protected:
     std::filesystem::path _wadRoot;
+    std::string _mod;
     FileList files;
 };
 

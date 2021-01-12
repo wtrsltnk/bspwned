@@ -75,8 +75,8 @@ void glhPerspectivef2(
 }
 
 std::string FindRootFromFilePath(
-    const std::string &filePath /*,
-    std::string &mod*/
+    const std::string &filePath ,
+    std::string &mod
 )
 {
     auto path = std::filesystem::path(filePath);
@@ -109,7 +109,7 @@ std::string FindRootFromFilePath(
 
             if (p.path().filename() == "hl.exe" && p.path().has_parent_path())
             {
-                /*mod = lastDirectory;*/
+                mod = lastDirectory;
                 return p.path().parent_path().generic_string();
             }
         }
@@ -135,7 +135,8 @@ int main(
 
     Camera cam;
     WorldRenderer renderer;
-    ResourceManager resources(FindRootFromFilePath(argv[0]));
+    std::string mod;
+    ResourceManager resources(FindRootFromFilePath(argv[1], mod), mod);
     WorldLoader::Config config;
     config.resourceManager = &resources;
     WorldLoader loader(config);
@@ -189,8 +190,7 @@ int main(
 
     gladLoadGL();
 
-    // Enable sticky keys
-    glClearColor(0.0f, 0.1f, 0.3f, 1.0f);
+    glClearColor(1.0f, 0.1f, 0.3f, 1.0f);
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();

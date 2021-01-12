@@ -45,26 +45,26 @@ public:
 class Texture
 {
 public:
-    Texture() : width(0), height(0), bpp(0), mipmapping(false), repeat(true)
-    {
-        for (int i = 0; i < MIPLEVELS; i++)
-            data[i] = 0;
-    }
+    Texture() = default;
+
     virtual ~Texture()
     {
         for (int i = 0; i < MIPLEVELS; i++)
-            if (data[i] != 0)
+        {
+            if (data[i] != nullptr)
+            {
                 delete[] data[i];
+            }
+        }
     }
 
     std::string name;
-    int width;
-    int height;
-    int bpp;
-    bool mipmapping;
-    bool repeat;
-    unsigned char *data[4];
-    unsigned int glIndex;
+    int width = 0;
+    int height = 0;
+    int bpp = 0;
+    bool repeat = true;
+    unsigned char *data[MIPLEVELS] = {nullptr, nullptr, nullptr, nullptr};
+    unsigned int glIndex = 0;
 };
 
 class IResources
@@ -72,12 +72,21 @@ class IResources
 public:
     virtual ~IResources() {}
 
-    virtual unsigned int addTexture(const Texture &texture) = 0;
+    virtual unsigned int addTexture(
+        const Texture &texture) = 0;
 
-    virtual std::string findFile(const std::string &filename) = 0;
-    virtual IData *openFile(const std::string &filename) = 0;
-    virtual bool openFileAsTexture(Texture &texture, const std::string &filename) = 0;
-    virtual void closeFile(const IData *file) = 0;
+    virtual std::string findFile(
+        const std::string &filename) = 0;
+
+    virtual IData *openFile(
+        const std::string &filename) = 0;
+
+    virtual bool openFileAsTexture(
+        Texture &texture,
+        const std::string &filename) = 0;
+
+    virtual void closeFile(
+        const IData *file) = 0;
 };
 
 class IFrustum
@@ -85,7 +94,9 @@ class IFrustum
 public:
     virtual ~IFrustum() {}
 
-    virtual bool cullBoundingBox(float mins[3], float maxs[3]) const = 0;
+    virtual bool cullBoundingBox(
+        float mins[3],
+        float maxs[3]) const = 0;
 };
 
 class IPhysics
@@ -93,13 +104,32 @@ class IPhysics
 public:
     virtual ~IPhysics() {}
 
-    virtual void setLeafSpacesCount(int count) = 0;
-    virtual void addToLeafSpace(int leafSpaceIndex, float *vertexData, int vertexCount, int *indexData, int indexCount) = 0;
-    virtual void createPlane(const float plane[4]) = 0;
-    virtual void *createSphere(float radius, float mass, const float position[3], const float force[3], const float ang[3]) = 0;
-    virtual void getGeomPosition(void *geom, float position[3]) = 0;
+    virtual void setLeafSpacesCount(
+        int count) = 0;
 
-    virtual void step(double time) = 0;
+    virtual void addToLeafSpace(
+        int leafSpaceIndex,
+        float *vertexData,
+        int vertexCount,
+        int *indexData,
+        int indexCount) = 0;
+
+    virtual void createPlane(
+        const float plane[4]) = 0;
+
+    virtual void *createSphere(
+        float radius,
+        float mass,
+        const float position[3],
+        const float force[3],
+        const float ang[3]) = 0;
+
+    virtual void getGeomPosition(
+        void *geom,
+        float position[3]) = 0;
+
+    virtual void step(
+        double time) = 0;
 };
 
 #endif /* _INTERFACES_H */
