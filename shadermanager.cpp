@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   shadermanager.cpp
  * Author: wouter
  * 
@@ -23,20 +23,12 @@ typedef struct sShaderList
 
 } tShaderList;
 
-class ShaderManager::PIMPL
-{
-public:
-    int mTextureCount;
-    Texture *mTextures;
-    vector<tShader> mShaders;
-
-    bool shaderEquals(const tShader &s1, const tShader &s2) const;
-};
-
 ShaderManager *ShaderManager::createSingleton()
 {
-    if (ShaderManager::sSingleton == NULL)
+    if (ShaderManager::sSingleton == nullptr)
+    {
         ShaderManager::sSingleton = new ShaderManager();
+    }
 
     return ShaderManager::sSingleton;
 }
@@ -48,72 +40,90 @@ ShaderManager *ShaderManager::singleton()
 
 void ShaderManager::destroySingleton()
 {
-    if (ShaderManager::sSingleton != NULL)
+    if (ShaderManager::sSingleton != nullptr)
+    {
         delete ShaderManager::sSingleton;
+    }
 
-    ShaderManager::sSingleton = NULL;
+    ShaderManager::sSingleton = nullptr;
 }
 
-ShaderManager *ShaderManager::sSingleton = NULL;
+ShaderManager *ShaderManager::sSingleton = nullptr;
 
 ShaderManager::ShaderManager()
-    : pimpl(new ShaderManager::PIMPL())
 {
-    pimpl->mTextureCount = 0;
-    pimpl->mTextures = NULL;
+    _textureCount = 0;
+    _textures = nullptr;
 }
 
 ShaderManager::~ShaderManager()
 {
-    delete pimpl;
+    if (_textures != nullptr)
+    {
+        delete[] _textures;
+        _textures = nullptr;
+    }
 }
 
-void ShaderManager::setTextureCount(int count)
+void ShaderManager::SetTextureCount(
+    int count)
 {
-    pimpl->mTextureCount = count;
+    _textureCount = count;
 
-    if (pimpl->mTextures != NULL)
+    if (_textures != nullptr)
     {
         // TODO: assert here, this can not happen when the SetTextureCount() is called only once (which should be the case)
         exit(1);
     }
 
-    if (pimpl->mTextureCount > 0)
+    if (_textureCount > 0)
     {
-        pimpl->mTextures = new Texture[pimpl->mTextureCount];
+        _textures = new Texture[_textureCount];
     }
 }
 
-int ShaderManager::getTextureCount() const
+int ShaderManager::GetTextureCount() const
 {
-    return pimpl->mTextureCount;
+    return _textureCount;
 }
 
-Texture *ShaderManager::getTexture(int index) const
+Texture *ShaderManager::GetTexture(
+    int index) const
 {
-    if (pimpl->mTextures == NULL)
+    if (_textures == nullptr)
     {
         // TODO: assert here, this method cannot be called when the texture (and shader) array is not initialized yet. This means the SetTextureCount() has not been called
         exit(1);
     }
-    if (index >= 0 && index < pimpl->mTextureCount)
-        return &pimpl->mTextures[index];
 
-    return NULL;
+    if (index >= 0 && index < _textureCount)
+    {
+        return &_textures[index];
+    }
+
+    return nullptr;
 }
 
-int ShaderManager::addShader(int textureIndex, int fxMode, float fxAmount, float fxColor[3])
+int ShaderManager::AddShader(
+    int textureIndex,
+    int fxMode,
+    float fxAmount,
+    float fxColor[3])
 {
     // Return when the textureindex is not possible
-    if (textureIndex < 0 || textureIndex >= pimpl->mTextureCount)
+    if (textureIndex < 0 || textureIndex >= _textureCount)
+    {
         return -1;
+    }
 
     // Create a shader structure
-    tShader shader = {0};
+    tShader shader = {0, 0, {0, 0, 0}, 0, 0, 0, 0};
     shader.textureIndex = textureIndex;
     shader.fxAmount = fxAmount;
     for (int i = 0; i < 3; i++)
+    {
         shader.fxColor[i] = fxColor[i];
+    }
     shader.alphaTest = 0.8f;
 
     switch (fxMode)
@@ -143,37 +153,46 @@ int ShaderManager::addShader(int textureIndex, int fxMode, float fxAmount, float
         }
     }
 
-    if (!pimpl->mTextures[textureIndex].name.empty())
+    if (!_textures[textureIndex].name.empty())
     {
-        str tName = {pimpl->mTextures[textureIndex].name.c_str()};
+        std::string tName = _textures[textureIndex].name.c_str();
 
         // Check for transparent textures
-        if (tName.str[0] == '{' || shader.fxAmount < 1.0f)
+        if (tName[0] == '{' || shader.fxAmount < 1.0f)
+        {
             shader.flags |= SHADER_FLAG_TRANSPARENTTEXTURE;
-
+        }
         // Check for water textures
-        if (tName.str[0] == '!')
+        if (tName[0] == '!')
+        {
             shader.flags |= SHADER_FLAG_WATERTEXTURE;
-
+        }
         if (tName == "{blue" || tName == "sky" || tName == "aaatrigger" || tName == "clip" || tName == "skip")
+        {
             shader.flags |= SHADER_FLAG_SPECIALTEXTURE;
+        }
     }
 
     // First check if there is a shader with the same properties, return the index when this is true
-    for (size_t i = 0; i < pimpl->mShaders.size(); i++)
-        if (pimpl->shaderEquals(pimpl->mShaders[i], shader))
+    for (size_t i = 0; i < _shaders.size(); i++)
+    {
+        if (shaderEquals(_shaders[i], shader))
+        {
             return i;
+        }
+    }
 
     // Add the shader to the vector
-    pimpl->mShaders.push_back(shader);
+    _shaders.push_back(shader);
 
     // Return the index of the new shader
-    return pimpl->mShaders.size() - 1;
+    return _shaders.size() - 1;
 }
 
-void ShaderManager::useShader(int shaderIndex) const
+void ShaderManager::UseShader(
+    int shaderIndex) const
 {
-    tShader shader = pimpl->mShaders[shaderIndex];
+    tShader shader = _shaders[shaderIndex];
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
@@ -183,7 +202,7 @@ void ShaderManager::useShader(int shaderIndex) const
     if (shader.flags & SHADER_FLAG_USETEXTURE)
     {
         glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, pimpl->mTextures[shader.textureIndex].glIndex);
+        glBindTexture(GL_TEXTURE_2D, _textures[shader.textureIndex].glIndex);
     }
     else
     {
@@ -193,31 +212,44 @@ void ShaderManager::useShader(int shaderIndex) const
     // Alpha testing
     glAlphaFunc(GL_GEQUAL, shader.alphaTest);
     if (shader.flags & SHADER_FLAG_TRANSPARENTTEXTURE)
+    {
         glEnable(GL_ALPHA_TEST);
+    }
     else
+    {
         glDisable(GL_ALPHA_TEST);
+    }
 
     // Blending
     glBlendFunc(shader.sourceBlend, shader.destBlend);
     if (shader.flags & SHADER_FLAG_BLEND)
+    {
         glEnable(GL_BLEND);
+    }
     else
+    {
         glDisable(GL_BLEND);
+    }
 
     glColor4f(shader.fxColor[0], shader.fxColor[1], shader.fxColor[2], shader.fxAmount);
 }
 
-const tShader *ShaderManager::getShader(int index) const
+const tShader *ShaderManager::GetShader(
+    int index) const
 {
-    return &pimpl->mShaders[index];
+    return &_shaders[index];
 }
 
-bool ShaderManager::PIMPL::shaderEquals(const tShader &s1, const tShader &s2) const
+bool ShaderManager::shaderEquals(
+    const tShader &s1,
+    const tShader &s2) const
 {
     if (s1.textureIndex != s2.textureIndex) return false;
     if (s1.fxAmount != s2.fxAmount) return false;
     for (int i = 0; i < 3; i++)
+    {
         if (s1.fxColor[i] != s2.fxColor[i]) return false;
+    }
     if (s1.flags != s2.flags) return false;
     if (s1.sourceBlend != s2.sourceBlend) return false;
     if (s1.destBlend != s2.destBlend) return false;

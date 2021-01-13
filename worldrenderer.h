@@ -6,14 +6,16 @@
  */
 
 #ifndef _WORLDRENDERER_H
-#define	_WORLDRENDERER_H
+#define _WORLDRENDERER_H
 
-#include "staticrenderer.h"
 #include "entitymanager.h"
+#include "interfaces.h"
 #include "shadermanager.h"
 #include "skyrenderer.h"
+#include "staticrenderer.h"
 #include "types.h"
-#include "interfaces.h"
+
+#include <glm/glm.hpp>
 
 class WorldRenderer
 {
@@ -26,48 +28,56 @@ public:
         Config();
         virtual ~Config();
 
-        float mViewPoint[3];
-        IFrustum* mFrustum;
-        
+        glm::vec3 mViewPoint;
+        IFrustum *mFrustum;
+
     } mConfig;
+
 public:
     WorldRenderer();
+
     virtual ~WorldRenderer();
 
     void setup();
-    void render(const float position[3]);
-    void cleanup();
-    
-    int findLeaf(float position[3], tBSPPlane* plane = NULL, float offset = 0);
-    bool testFaceVisibility(int faceIndex);
 
-    void getPlayerStart(float position[3]) const;
+    void render(
+        const glm::vec3 &position);
+
+    void cleanup();
+
+    int findLeaf(
+        const glm::vec3 &position,
+        tBSPPlane *plane = NULL,
+        float offset = 0);
+
+    bool testFaceVisibility(
+        int faceIndex);
+
+    glm::vec3 getPlayerStart() const;
 
 private:
     StaticRenderer mStaticRenderer;
     SkyRenderer mSkyRenderer;
     EntityManager mEntityManager;
-    ShaderManager& mShaderManager;
+    ShaderManager &mShaderManager;
 
-    tBSPIndexList* mPvs;
-    tBSPIndexList* mEntityPvs;
+    tBSPIndexList *mPvs;
+    tBSPIndexList *mEntityPvs;
 
     int mLeafCount;
-    tBSPLeaf* mLeafs;
+    tBSPLeaf *mLeafs;
 
     int mPlaneCount;
-    tBSPPlane* mPlanes;
+    tBSPPlane *mPlanes;
 
     int mModelCount;
-    tBSPModel* mModels;
+    tBSPModel *mModels;
 
     int mNodeCount;
-    tBSPNode* mNodes;
+    tBSPNode *mNodes;
 
     int mMarkSurfaceCount;
-    unsigned short* mMarkSurfaces;
-
+    unsigned short *mMarkSurfaces;
 };
 
-#endif	/* _WORLDRENDERER_H */
-
+#endif /* _WORLDRENDERER_H */

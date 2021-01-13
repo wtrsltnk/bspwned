@@ -7,7 +7,6 @@
 
 #include "worldrenderer.h"
 
-#include "math3d.h"
 #include "opengl.h"
 #include <string.h>
 
@@ -49,7 +48,7 @@ void WorldRenderer::setup()
 }
 
 void WorldRenderer::render(
-    const float position[3])
+    const glm::vec3 &position)
 {
     mSkyRenderer.render(position);
 
@@ -133,7 +132,7 @@ void WorldRenderer::cleanup()
 }
 
 int WorldRenderer::findLeaf(
-    float position[3],
+    const glm::vec3 &position,
     tBSPPlane *plane,
     float offset)
 {
@@ -171,7 +170,7 @@ bool WorldRenderer::testFaceVisibility(
     const tFace &face = this->mStaticRenderer.getFace(faceIndex);
 
     // Determine the distance to the face from the camera viewport
-    float distance = DotProduct(mConfig.mViewPoint, face.planeNormal) - face.planeDistance;
+    float distance = glm::dot(mConfig.mViewPoint, face.planeNormal) - face.planeDistance;
 
     // Skip the face when we see its back
     if (face.planeSide && distance > 0)
@@ -186,10 +185,9 @@ bool WorldRenderer::testFaceVisibility(
     return StaticRenderer::testFaceVisibility(face);
 }
 
-void WorldRenderer::getPlayerStart(
-    float position[3]) const
+glm::vec3 WorldRenderer::getPlayerStart() const
 {
-    mEntityManager.getPlayerStart(position);
+    return mEntityManager.getPlayerStart();
 }
 
 WorldRenderer::Config::Config()

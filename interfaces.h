@@ -9,11 +9,17 @@
 #define _INTERFACES_H
 
 #include <iostream>
-#include <string.h>
+#include <string>
+
+bool iequals(
+    const std::string &a,
+    const std::string &b);
 
 class IData
 {
 public:
+    virtual ~IData() = default;
+
     std::string name;
 
     virtual long DataSize() const = 0;
@@ -49,11 +55,17 @@ public:
 
     virtual ~Texture()
     {
+        ClearData();
+    }
+
+    void ClearData()
+    {
         for (int i = 0; i < MIPLEVELS; i++)
         {
             if (data[i] != nullptr)
             {
                 delete[] data[i];
+                data[i] = nullptr;
             }
         }
     }

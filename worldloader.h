@@ -10,10 +10,9 @@
 
 #include "types.h"
 #include "interfaces.h"
-#include "error.h"
 #include "worldrenderer.h"
 
-class WorldLoader : public Error
+class WorldLoader
 {
 public:
     class Config

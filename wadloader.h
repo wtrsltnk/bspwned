@@ -6,26 +6,28 @@
  */
 
 #ifndef _WADLOADER_H
-#define	_WADLOADER_H
+#define _WADLOADER_H
 
-#include "types.h"
 #include "interfaces.h"
+#include "types.h"
 
 class WADLoader
 {
 public:
-    WADLoader(const IData* data, const char* filename);
+    WADLoader(
+        const IData *data,
+        const std::string &filename);
+
     virtual ~WADLoader();
 
-    const unsigned char* getTextureData(const char* name) const;
-    
-private:
-    char mFilename[256];
-    IData* mData;
-    tWADHeader mHeader;
-    tWADLump* mLumps;
+    const unsigned char *getTextureData(
+        const std::string &name) const;
 
+private:
+    std::string mFilename;
+    std::unique_ptr<IData> mData;
+    tWADHeader mHeader;
+    std::unique_ptr<tWADLump[]> mLumps;
 };
 
-#endif	/* _WADLOADER_H */
-
+#endif /* _WADLOADER_H */

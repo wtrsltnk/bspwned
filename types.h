@@ -6,7 +6,9 @@
  */
 
 #ifndef _BSP_TYPES_H
-#define	_BSP_TYPES_H
+#define _BSP_TYPES_H
+
+#include <glm/glm.hpp>
 
 #define HL1_BSP_SIGNATURE 30
 #define HL1_BSP_LUMPCOUNT 15
@@ -29,7 +31,7 @@
 
 #define HL1_WAD_SIGNATURE "WAD3"
 
-#define	MAX_MIP_LEVELS 4
+#define MAX_MIP_LEVELS 4
 #define MAX_MAP_HULLS 4
 #define MAX_LIGHT_MAPS 4
 #define MAX_AMBIENTS 4
@@ -62,7 +64,7 @@ typedef struct sBSPHeader
 typedef struct sBSPMipTexOffsetTable
 {
     int miptexCount;
-    int offsets[1];             /* an array with "miptexcount" number of offsets */
+    int offsets[1]; /* an array with "miptexcount" number of offsets */
 
 } tBSPMipTexOffsetTable;
 
@@ -75,13 +77,12 @@ typedef struct sBSPMipTexHeader
 
 } tBSPMipTexHeader;
 
-
 typedef struct sBSPModel
 {
     float mins[3], maxs[3];
     float origin[3];
     int headnode[MAX_MAP_HULLS];
-    int visLeafs;                       // not including the solid leaf 0
+    int visLeafs; // not including the solid leaf 0
     int firstFace;
     int faceCount;
 
@@ -109,7 +110,7 @@ typedef struct sBSPFace
 
     // lighting info
     unsigned char styles[MAX_LIGHT_MAPS];
-    int lightOffset;                    // start of [numstyles*surfsize] samples
+    int lightOffset; // start of [numstyles*surfsize] samples
 
 } tBSPFace;
 
@@ -124,36 +125,36 @@ typedef struct sBSPPlane
 typedef struct sBSPNode
 {
     int planeIndex;
-    short children[2];                  // negative numbers are -(leafs+1), not nodes
-    short mins[3];                      // for sphere culling
+    short children[2]; // negative numbers are -(leafs+1), not nodes
+    short mins[3];     // for sphere culling
     short maxs[3];
     unsigned short firstFace;
-    unsigned short faceCount;            // counting both sides
+    unsigned short faceCount; // counting both sides
 
 } tBSPNode;
 
 typedef struct sBSPClipNode
 {
     int planeIndex;
-    short children[2];                  // negative numbers are contents
+    short children[2]; // negative numbers are contents
 
 } tBSPClipNode;
 
 // This is the information for calculating the texture cooridnates on ta face
 typedef struct sBSPTexInfo
 {
-    float    vecs[2][4];                // [s/t][xyz offset]
-    int      miptexIndex;
-    int      flags;
-    
+    float vecs[2][4]; // [s/t][xyz offset]
+    int miptexIndex;
+    int flags;
+
 } tBSPTexInfo;
 
 typedef struct sBSPLeaf
 {
     int contents;
-    int visofs;                         // -1 = no visibility info
+    int visofs; // -1 = no visibility info
 
-    short mins[3];                      // for frustum culling
+    short mins[3]; // for frustum culling
     short maxs[3];
 
     unsigned short firstMarkSurface;
@@ -166,8 +167,8 @@ typedef struct sBSPLeaf
 typedef struct sBSPIndexList
 {
     int size;
-    int* indices;
-    
+    int *indices;
+
 } tBSPIndexList;
 
 typedef struct sWADHeader
@@ -193,8 +194,8 @@ typedef struct sWADLump
 
 typedef struct sEntityValue
 {
-    char* key;
-    char* value;
+    char *key;
+    char *value;
 
 } tEntityValue;
 
@@ -202,38 +203,38 @@ typedef struct sEntity
 {
     char className[64];
     int valueCount;
-    tEntityValue* values;
+    tEntityValue *values;
 
 } tEntity;
 
 typedef struct sVertex
 {
-    float xyz[3];		// The position of this vertex
-    float st[2];		// The texture coordinates
-    float lslt[2];		// The lightmap texture coordinates
+    glm::vec3 xyz;  // The position of this vertex
+    glm::vec2 st;   // The texture coordinates
+    glm::vec2 lslt; // The lightmap texture coordinates
 
 } tVertex;
 
 typedef struct sModel
 {
-    int fxMode;             // The mode of rendering this model: Color, Glow, Additive, Solid, Normal or Texture blending
-    float fxAmount;         // The transparency amount
-    float fxColor[3];       // The color to render this model in
-    float origin[3];        // The origin of the model (don't use it in the displaylist)
-    unsigned int displaylistIndex;   // The index of the displaylist contianing this model
+    int fxMode;                    // The mode of rendering this model: Color, Glow, Additive, Solid, Normal or Texture blending
+    float fxAmount;                // The transparency amount
+    float fxColor[3];              // The color to render this model in
+    float origin[3];               // The origin of the model (don't use it in the displaylist)
+    unsigned int displaylistIndex; // The index of the displaylist contianing this model
 
 } tModel;
 
 // Forward declaration of the Texture class defined in interfaces.h
 class Texture;
 
-#define SHADER_FLAG_USETEXTURE              0x00000001
-#define SHADER_FLAG_SPECIALTEXTURE          0x00000002
-#define SHADER_FLAG_TRANSPARENTTEXTURE      0x00000004
-#define SHADER_FLAG_WATERTEXTURE            0x00000008
-#define SHADER_FLAG_SOLID                   0x00000010
-#define SHADER_FLAG_ILLUSIONARY             0x00000020
-#define SHADER_FLAG_BLEND                   0x00000200
+#define SHADER_FLAG_USETEXTURE 0x00000001
+#define SHADER_FLAG_SPECIALTEXTURE 0x00000002
+#define SHADER_FLAG_TRANSPARENTTEXTURE 0x00000004
+#define SHADER_FLAG_WATERTEXTURE 0x00000008
+#define SHADER_FLAG_SOLID 0x00000010
+#define SHADER_FLAG_ILLUSIONARY 0x00000020
+#define SHADER_FLAG_BLEND 0x00000200
 
 typedef struct sShader
 {
@@ -244,29 +245,28 @@ typedef struct sShader
     int sourceBlend;
     int destBlend;
     float alphaTest;
-    
+
 } tShader;
 
 typedef struct sFace
 {
-    int firstVertex;        // Index of the first vertex to render
-    int vertexCount;        // Number of vertices to render
-    int faceFlags;          // Flags for specifing special faces types
-    int faceType;           // The type of face: GL_TRIANGLES, GL_QUADS, GL_POLYGONS
+    int firstVertex; // Index of the first vertex to render
+    int vertexCount; // Number of vertices to render
+    int faceFlags;   // Flags for specifing special faces types
+    int faceType;    // The type of face: GL_TRIANGLES, GL_QUADS, GL_POLYGONS
 
-    int modelIndex;              // The index of the model it belongs to
+    int modelIndex; // The index of the model it belongs to
 
-    short planeSide;        // Side of the plane this face is on
-    float planeNormal[3];   // Normal of the plane this face is on
-    float planeDistance;    // Distance of the plane
+    short planeSide;       // Side of the plane this face is on
+    glm::vec3 planeNormal; // Normal of the plane this face is on
+    float planeDistance;   // Distance of the plane
 
-    int textureIndex;       // The index of the texture for this face
-    int shaderIndex;        // The index of the shader for this face
-    Texture* lightmap;
+    int textureIndex; // The index of the texture for this face
+    int shaderIndex;  // The index of the shader for this face
+    Texture *lightmap;
 
 } tFace;
 
 #pragma pack(pop)
 
-#endif	/* _BSP_TYPES_H */
-
+#endif /* _BSP_TYPES_H */

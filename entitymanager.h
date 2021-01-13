@@ -6,29 +6,35 @@
  */
 
 #ifndef _ENTITYMANAGER_H
-#define	_ENTITYMANAGER_H
+#define _ENTITYMANAGER_H
 
 #include "types.h"
+
+#include <glm/glm.hpp>
 
 class EntityManager
 {
 public:
     EntityManager();
     virtual ~EntityManager();
-    
-    bool parseFromBSPEntityData(unsigned char* data, int size);
 
-    int addEntity(tEntity* entity);
+    bool parseFromBSPEntityData(
+        unsigned char *data,
+        int size);
+
+    int addEntity(
+        tEntity *entity);
+
     int getEntityCount() const;
-    const tEntity* getEntity(int index) const;
 
-    void getPlayerStart(float position[3]) const;
+    const tEntity *getEntity(
+        int index) const;
+
+    glm::vec3 getPlayerStart() const;
 
 private:
     class PIMPL;
-    PIMPL* pimpl;
-
+    PIMPL *pimpl;
 };
 
-#endif	/* _ENTITYMANAGER_H */
-
+#endif /* _ENTITYMANAGER_H */

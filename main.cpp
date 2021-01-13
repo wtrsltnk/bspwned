@@ -5,21 +5,21 @@
  * Created on April 8, 2009, 8:29 PM
  */
 
+#include "opengl.h"
+
+#include "camera.h"
+#include "resources.h"
+#include "stb_truetype.h"
+#include "worldloader.h"
+
 #define _USE_MATH_DEFINES
 #include <cmath>
 
+#include <glm/glm.hpp>
 #include <iostream>
 #include <spdlog/spdlog.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "opengl.h"
-
-#include "camera.h"
-#include "math3d.h"
-#include "resources.h"
-#include "stb_truetype.h"
-#include "worldloader.h"
 
 int running = true; // Flag telling if the program is running
 
@@ -145,12 +145,17 @@ void my_stbtt_print(
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDisable(GL_LIGHTING);
     glDisable(GL_DEPTH_TEST);
+    glDisable(GL_ALPHA_TEST);
+
     glActiveTextureARB(GL_TEXTURE1);
     glDisable(GL_TEXTURE_2D);
+
     glActiveTextureARB(GL_TEXTURE0);
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, ftex);
+
     glBegin(GL_QUADS);
+    glColor3f(1.0f, 1.0f, 1.0f);
 
     while (*txt)
     {
@@ -231,12 +236,17 @@ void Console::Render(
 
     glTranslatef(0, _currentPosition, 0);
 
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDisable(GL_LIGHTING);
     glDisable(GL_DEPTH_TEST);
+    glDisable(GL_ALPHA_TEST);
+
     glActiveTextureARB(GL_TEXTURE1);
     glDisable(GL_TEXTURE_2D);
+
     glActiveTextureARB(GL_TEXTURE0);
     glDisable(GL_TEXTURE_2D);
 
@@ -248,7 +258,6 @@ void Console::Render(
     glVertex2f(0.0f, 400.0f);
     glEnd();
 
-    glColor3f(1.0f, 1.0f, 1.0f);
     float y = 390;
 
     my_stbtt_print(10, y, fmt::format("] {}_", _input));
@@ -378,8 +387,6 @@ int main(
     {
         if (!loader.loadBSP(argv[1], renderer))
         {
-            spdlog::error(loader.getLastError());
-
             return 1;
         }
 
@@ -392,7 +399,7 @@ int main(
         return 0;
     }
 
-    float rot[3] = {0};
+    glm::vec3 rot = glm::vec3(0.0f);
 
     glfwInit();
 
@@ -432,13 +439,6 @@ int main(
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-    glEnable(GL_DEPTH_TEST);
-
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_FRONT);
 
     loader.setupWorld(renderer);
 
@@ -503,13 +503,20 @@ int main(
         cam.SetRotation(rot);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+        glEnable(GL_DEPTH_TEST);
+
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_FRONT);
+
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
         cam.Update();
 
-        Vector3 cameraPosition(cam.getPosition());
+        glm::vec3 cameraPosition = cam.getPosition();
         cameraPosition *= -1;
-        cameraPosition.copyTo(renderer.mConfig.mViewPoint);
+        renderer.mConfig.mViewPoint = cameraPosition;
         renderer.render(cameraPosition);
 
         glMatrixMode(GL_PROJECTION);

@@ -6,40 +6,55 @@
  */
 
 #ifndef _SHADERMANAGER_H
-#define	_SHADERMANAGER_H
+#define _SHADERMANAGER_H
 
 #include "types.h"
+#include <vector>
 
 class Texture;
 
 class ShaderManager
 {
 public:
-    static ShaderManager* createSingleton();
-    static ShaderManager* singleton();
+    static ShaderManager *createSingleton();
+    static ShaderManager *singleton();
     static void destroySingleton();
 
 private:
-    static ShaderManager* sSingleton;
+    static ShaderManager *sSingleton;
     ShaderManager();
-    
+
 public:
     virtual ~ShaderManager();
 
-    void setTextureCount(int count);
-    int getTextureCount() const;
-    Texture* getTexture(int index) const;
+    void SetTextureCount(
+        int count);
 
-    int addShader(int textureIndex, int fxMode, float fxAmount, float fxColor[3]);
-    void useShader(int shaderIndex) const;
-    const tShader* getShader(int index) const;
+    int GetTextureCount() const;
+
+    Texture *GetTexture(
+        int index) const;
+
+    int AddShader(
+        int textureIndex,
+        int fxMode,
+        float fxAmount,
+        float fxColor[3]);
+
+    void UseShader(
+        int shaderIndex) const;
+
+    const tShader *GetShader(
+        int index) const;
 
 private:
-    class PIMPL;
-    PIMPL* pimpl;
+    int _textureCount;
+    Texture *_textures;
+    std::vector<tShader> _shaders;
 
-
+    bool shaderEquals(
+        const tShader &s1,
+        const tShader &s2) const;
 };
 
-#endif	/* _SHADERMANAGER_H */
-
+#endif /* _SHADERMANAGER_H */

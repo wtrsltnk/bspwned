@@ -15,8 +15,6 @@ target_sources(Bspwned
         camera.h
         entitymanager.cpp
         entitymanager.h
-        error.cpp
-        error.h
         glad.c
         include/stb_image.h
         include/stb_truetype.h
@@ -24,10 +22,7 @@ target_sources(Bspwned
         lightmap.cpp
         lightmap.h
         main.cpp
-        math3d.h
         opengl.h
-        physics.cpp
-        physics.h
         resources.cpp
         resources.h
         shadermanager.cpp
@@ -38,16 +33,12 @@ target_sources(Bspwned
         staticrenderer.h
         stb_image.cpp
         stb_truetype.cpp
-        stringcompare.cpp
-        stringcompare.h
         targa.cpp
         textureloader.cpp
         textureloader.h
         tokenizer.cpp
         tokenizer.h
         types.h
-        vector3.cpp
-        vector3.h
         wadloader.cpp
         wadloader.h
         worldloader.cpp
@@ -69,5 +60,6 @@ target_link_libraries(Bspwned
         ${OPENGL_LIBRARIES}
         glfw
         spdlog
+        glm
 )
 

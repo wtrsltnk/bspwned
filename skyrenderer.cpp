@@ -9,12 +9,12 @@
 
 #include "opengl.h"
 
-#define SKY_FRONT  (1<<0)
-#define SKY_BACK   (1<<1)
-#define SKY_LEFT   (1<<2)
-#define SKY_RIGHT  (1<<3)
-#define SKY_UP     (1<<4)
-#define SKY_DOWN   (1<<5)
+#define SKY_FRONT (1 << 0)
+#define SKY_BACK (1 << 1)
+#define SKY_LEFT (1 << 2)
+#define SKY_RIGHT (1 << 3)
+#define SKY_UP (1 << 4)
+#define SKY_DOWN (1 << 5)
 
 SkyRenderer::SkyRenderer()
 {
@@ -24,7 +24,8 @@ SkyRenderer::~SkyRenderer()
 {
 }
 
-void SkyRenderer::render(const float position[3])
+void SkyRenderer::render(
+    const glm::vec3 &position)
 {
     float size = 4.0f;
     int renderFlag = SKY_RIGHT | SKY_LEFT | SKY_BACK | SKY_FRONT | SKY_UP | SKY_DOWN;
@@ -54,10 +55,14 @@ void SkyRenderer::render(const float position[3])
     {
         glBindTexture(GL_TEXTURE_2D, mTextures[2].glIndex);
         glBegin(GL_QUADS);
-        glTexCoord2f(uv_0, uv_0); glVertex3f(size, size, -size);
-        glTexCoord2f(uv_0, uv_1); glVertex3f(size, -size, -size);
-        glTexCoord2f(uv_1, uv_1); glVertex3f(-size, -size, -size);
-        glTexCoord2f(uv_1, uv_0); glVertex3f(-size, size, -size);
+        glTexCoord2f(uv_0, uv_0);
+        glVertex3f(size, size, -size);
+        glTexCoord2f(uv_0, uv_1);
+        glVertex3f(size, -size, -size);
+        glTexCoord2f(uv_1, uv_1);
+        glVertex3f(-size, -size, -size);
+        glTexCoord2f(uv_1, uv_0);
+        glVertex3f(-size, size, -size);
         glEnd();
     }
 
@@ -65,58 +70,74 @@ void SkyRenderer::render(const float position[3])
     {
         glBindTexture(GL_TEXTURE_2D, mTextures[0].glIndex);
         glBegin(GL_QUADS);
-        glTexCoord2f(uv_0, uv_0); glVertex3f(-size, size, size);
-        glTexCoord2f(uv_0, uv_1); glVertex3f(-size, -size, size);
-        glTexCoord2f(uv_1, uv_1); glVertex3f(size, -size, size);
-        glTexCoord2f(uv_1, uv_0); glVertex3f(size, size, size);
+        glTexCoord2f(uv_0, uv_0);
+        glVertex3f(-size, size, size);
+        glTexCoord2f(uv_0, uv_1);
+        glVertex3f(-size, -size, size);
+        glTexCoord2f(uv_1, uv_1);
+        glVertex3f(size, -size, size);
+        glTexCoord2f(uv_1, uv_0);
+        glVertex3f(size, size, size);
         glEnd();
     }
-
 
     if (renderFlag & SKY_LEFT)
     {
         glBindTexture(GL_TEXTURE_2D, mTextures[3].glIndex);
         glBegin(GL_QUADS);
-        glTexCoord2f(uv_0, uv_0); glVertex3f(-size, size, -size);
-        glTexCoord2f(uv_0, uv_1); glVertex3f(-size, -size, -size);
-        glTexCoord2f(uv_1, uv_1); glVertex3f(-size, -size, size);
-        glTexCoord2f(uv_1, uv_0); glVertex3f(-size, size, size);
+        glTexCoord2f(uv_0, uv_0);
+        glVertex3f(-size, size, -size);
+        glTexCoord2f(uv_0, uv_1);
+        glVertex3f(-size, -size, -size);
+        glTexCoord2f(uv_1, uv_1);
+        glVertex3f(-size, -size, size);
+        glTexCoord2f(uv_1, uv_0);
+        glVertex3f(-size, size, size);
         glEnd();
     }
-
 
     if (renderFlag & SKY_RIGHT)
     {
         glBindTexture(GL_TEXTURE_2D, mTextures[4].glIndex);
         glBegin(GL_QUADS);
-        glTexCoord2f(uv_1, uv_1); glVertex3f(size, -size, -size);
-        glTexCoord2f(uv_1, uv_0); glVertex3f(size, size, -size);
-        glTexCoord2f(uv_0, uv_0); glVertex3f(size, size, size);
-        glTexCoord2f(uv_0, uv_1); glVertex3f(size, -size, size);
+        glTexCoord2f(uv_1, uv_1);
+        glVertex3f(size, -size, -size);
+        glTexCoord2f(uv_1, uv_0);
+        glVertex3f(size, size, -size);
+        glTexCoord2f(uv_0, uv_0);
+        glVertex3f(size, size, size);
+        glTexCoord2f(uv_0, uv_1);
+        glVertex3f(size, -size, size);
         glEnd();
     }
-
 
     if (renderFlag & SKY_DOWN)
     {
         glBindTexture(GL_TEXTURE_2D, mTextures[1].glIndex);
         glBegin(GL_QUADS);
-        glTexCoord2f(uv_0, uv_1); glVertex3f(-size, -size, size);
-        glTexCoord2f(uv_1, uv_1); glVertex3f(-size, -size, -size);
-        glTexCoord2f(uv_1, uv_0); glVertex3f(size, -size, -size);
-        glTexCoord2f(uv_0, uv_0); glVertex3f(size, -size, size);
+        glTexCoord2f(uv_0, uv_1);
+        glVertex3f(-size, -size, size);
+        glTexCoord2f(uv_1, uv_1);
+        glVertex3f(-size, -size, -size);
+        glTexCoord2f(uv_1, uv_0);
+        glVertex3f(size, -size, -size);
+        glTexCoord2f(uv_0, uv_0);
+        glVertex3f(size, -size, size);
         glEnd();
     }
-
 
     if (renderFlag & SKY_UP)
     {
         glBindTexture(GL_TEXTURE_2D, mTextures[5].glIndex);
         glBegin(GL_QUADS);
-        glTexCoord2f(uv_1, uv_0); glVertex3f(-size, size, -size);
-        glTexCoord2f(uv_0, uv_0); glVertex3f(-size, size, size);
-        glTexCoord2f(uv_0, uv_1); glVertex3f(size, size, size);
-        glTexCoord2f(uv_1, uv_1); glVertex3f(size, size, -size);
+        glTexCoord2f(uv_1, uv_0);
+        glVertex3f(-size, size, -size);
+        glTexCoord2f(uv_0, uv_0);
+        glVertex3f(-size, size, size);
+        glTexCoord2f(uv_0, uv_1);
+        glVertex3f(size, size, size);
+        glTexCoord2f(uv_1, uv_1);
+        glVertex3f(size, size, -size);
         glEnd();
     }
     glPopMatrix();

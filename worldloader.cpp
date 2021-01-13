@@ -8,18 +8,23 @@
 #include "worldloader.h"
 
 #include "lightmap.h"
-#include "math3d.h"
 #include "opengl.h"
 #include "stringcompare.h"
 #include "textureloader.h"
 #include <iostream>
+#include <spdlog/spdlog.h>
+#include <sstream>
 #include <stdio.h>
 #include <string>
 #include <vector>
 
 using namespace std;
 
-bool boundingBoxesCollide(float mins1[3], float maxs1[3], short mins2[3], short maxs2[3]);
+bool boundingBoxesCollide(
+    float mins1[3],
+    float maxs1[3],
+    short mins2[3],
+    short maxs2[3]);
 
 WorldLoader::WorldLoader(
     const Config &config)
@@ -49,7 +54,8 @@ bool WorldLoader::loadBSP(
 {
     if (this->mConfig.resourceManager == nullptr)
     {
-        setError("No resource manager to load resources from");
+        spdlog::error("No resource manager to load resources from");
+
         return false;
     }
 
@@ -57,7 +63,8 @@ bool WorldLoader::loadBSP(
 
     if (bsp == nullptr)
     {
-        setError("Cannot load file");
+        spdlog::error("Cannot load file");
+
         return false;
     }
 
@@ -66,8 +73,10 @@ bool WorldLoader::loadBSP(
     // We only support BSP files version 30
     if (header->signature != HL1_BSP_SIGNATURE)
     {
-        setError("The file is not compatible");
+        spdlog::error("The file is not compatible");
+
         this->mConfig.resourceManager->closeFile(bsp);
+
         return false;
     }
 
@@ -154,7 +163,7 @@ bool WorldLoader::loadTextures(
 
     int textureCount = ((int *)buffer)[0];
     // The first integer in the buffer contains the number of textures, which we use to build a texture array with
-    renderer.mShaderManager.setTextureCount(textureCount);
+    renderer.mShaderManager.SetTextureCount(textureCount);
 
     // After the first integer, there follow the offsets for each texture header in the BSP file
     int *textureOffsets = &((int *)buffer)[1];
@@ -162,7 +171,7 @@ bool WorldLoader::loadTextures(
     // Parse the texture data into nice texture objects ready for use by OpenGL
     for (int i = 0; i < textureCount; i++)
     {
-        Texture *texture = renderer.mShaderManager.getTexture(i);
+        Texture *texture = renderer.mShaderManager.GetTexture(i);
         tl.getWadTexture(*texture, buffer + textureOffsets[i]);
     }
 
@@ -194,27 +203,38 @@ bool WorldLoader::loadShaders(
 
         for (int j = 0; j < entity->valueCount; j++)
         {
-            str key = {entity->values[j].key};
+            std::string key = entity->values[j].key;
 
             // Save the values of some variables that are needed for rendering
             if (key == "classname")
             {
-                str value = {entity->values[j].value};
+                std::string value = entity->values[j].value;
                 if (value == "worldspawn")
                 {
                     modelIndex = 0;
                 }
             }
             if (key == "model")
-                sscanf(entity->values[j].value, "*%d", &modelIndex);
+            {
+                char astrix;
+                std::istringstream(entity->values[j].value) >> astrix >> modelIndex;
+                if (modelIndex == 0)
+                {
+                    modelIndex = -1;
+                }
+            }
             if (key == "origin")
-                sscanf(entity->values[j].value, "%f %f %f", &origin[0], &origin[1], &origin[2]);
+            {
+                std::istringstream(entity->values[j].value) >> origin[0] >> origin[1] >> origin[2];
+            }
             if (key == "rendermode")
-                sscanf(entity->values[j].value, "%d", &fxMode);
+            {
+                std::istringstream(entity->values[j].value) >> fxMode;
+            }
             if (key == "rendercolor")
             {
                 int r, g, b;
-                sscanf(entity->values[j].value, "%d %d %d", &r, &g, &b);
+                std::istringstream(entity->values[j].value) >> r >> g >> b;
                 if (r || g || b)
                 {
                     fxColor[0] = (float)r / 255.0f;
@@ -225,21 +245,24 @@ bool WorldLoader::loadShaders(
             if (key == "renderamt")
             {
                 int renderamt;
-                sscanf(entity->values[j].value, "%d", &renderamt);
+                std::istringstream(entity->values[j].value) >> renderamt;
                 fxAmount = (float)renderamt / 255.0f;
             }
         }
-        // If there is a model index found within the entity variables, save these model properties in the static redenrer
-        if (modelIndex != -1)
-        {
-            tBSPModel &model = renderer.mModels[modelIndex];
-            for (int i = 0; i < model.faceCount; i++)
-            {
-                tBSPFace &bspFace = this->mFaces[model.firstFace + i];
-                tBSPTexInfo &texinfo = texinfos[bspFace.texinfo];
 
-                this->mShaderIndices[model.firstFace + i] = renderer.mShaderManager.addShader(texinfo.miptexIndex, fxMode, fxAmount, fxColor);
-            }
+        // If there is a model index found within the entity variables, save these model properties in the static redenrer
+        if (modelIndex == -1)
+        {
+            continue;
+        }
+
+        tBSPModel &model = renderer.mModels[modelIndex];
+        for (int i = 0; i < model.faceCount; i++)
+        {
+            tBSPFace &bspFace = this->mFaces[model.firstFace + i];
+            tBSPTexInfo &texinfo = texinfos[bspFace.texinfo];
+
+            this->mShaderIndices[model.firstFace + i] = renderer.mShaderManager.AddShader(texinfo.miptexIndex, fxMode, fxAmount, fxColor);
         }
     }
     return true;
@@ -281,10 +304,10 @@ bool WorldLoader::loadFaces(
         const tBSPFace bspFace = faces[i];
         const tBSPPlane bspPlane = renderer.mPlanes[bspFace.planeIndex];
         const tBSPTexInfo bspTexinfo = texinfos[bspFace.texinfo];
-        tFace renderFace = {0};
+        tFace renderFace = {0, 0, 0, 0, 0, 0, {0, 0, 0}, 0, 0, 0, nullptr};
         float is = 1.0f, it = 1.0f;
         float min[2], max[2];
-        Texture *texture = renderer.mShaderManager.getTexture(bspTexinfo.miptexIndex);
+        Texture *texture = renderer.mShaderManager.GetTexture(bspTexinfo.miptexIndex);
 
         // Regular face attributes we can just copy or set
         renderFace.planeSide = bspFace.side;
@@ -326,7 +349,7 @@ bool WorldLoader::loadFaces(
         // Itterate through all the edges for this face and put the vertices in the static renderer vertex array
         for (int e = 0; e < bspFace.edgeCount; e++)
         {
-            tVertex vertex = {0};
+            tVertex vertex = {{0, 0, 0}, {0, 0}, {0, 0}};
             int edgeIndex = surfedges[bspFace.firstEdge + e];
             if (edgeIndex < 0)
             {
@@ -345,8 +368,8 @@ bool WorldLoader::loadFaces(
             }
 
             // Compute the texture coordinates
-            float s = DotProduct(vertex.xyz, bspTexinfo.vecs[0]) + bspTexinfo.vecs[0][3];
-            float t = DotProduct(vertex.xyz, bspTexinfo.vecs[1]) + bspTexinfo.vecs[1][3];
+            float s = glm::dot(vertex.xyz, glm::vec3(bspTexinfo.vecs[0][0], bspTexinfo.vecs[0][1], bspTexinfo.vecs[0][2])) + bspTexinfo.vecs[0][3];
+            float t = glm::dot(vertex.xyz, glm::vec3(bspTexinfo.vecs[1][0], bspTexinfo.vecs[1][1], bspTexinfo.vecs[1][2])) + bspTexinfo.vecs[1][3];
             vertex.st[0] = s * is;
             vertex.st[1] = t * it;
 
@@ -415,13 +438,15 @@ bool WorldLoader::loadVisiblity(
             {
                 visOffset++;
                 j += (buffer[visOffset] << 3);
+
+                continue;
             }
-            else
+
+            for (unsigned char bit = 1; bit; bit <<= 1, j++)
             {
-                for (unsigned char bit = 1; bit; bit <<= 1, j++)
+                if (buffer[visOffset] & bit)
                 {
-                    if (buffer[visOffset] & bit)
-                        leafList.push_back(j);
+                    leafList.push_back(j);
                 }
             }
         }
@@ -429,10 +454,12 @@ bool WorldLoader::loadVisiblity(
         // When a vector is collected, create the indexlist and fill it with the indices gather in the previous step
         if (leafList.size() > 0)
         {
-            renderer.mPvs[i].size = leafList.size();
+            renderer.mPvs[i].size = static_cast<int>(leafList.size());
             renderer.mPvs[i].indices = new int[renderer.mPvs[i].size];
             for (int j = 0; j < renderer.mPvs[i].size; j++)
+            {
                 renderer.mPvs[i].indices[j] = leafList[j];
+            }
         }
         else
         {
@@ -444,16 +471,20 @@ bool WorldLoader::loadVisiblity(
         for (int j = 1; j < renderer.mModelCount; j++)
         {
             if (boundingBoxesCollide(renderer.mModels[j].mins, renderer.mModels[j].maxs, renderer.mLeafs[i].mins, renderer.mLeafs[i].maxs))
+            {
                 modelList.push_back(j);
+            }
         }
 
         // When a vector is collected, create the indexlist and fill it with the indices gather in the previous step
         if (modelList.size() > 0)
         {
-            renderer.mEntityPvs[i].size = modelList.size();
+            renderer.mEntityPvs[i].size = static_cast<int>(modelList.size());
             renderer.mEntityPvs[i].indices = new int[renderer.mEntityPvs[i].size];
             for (int j = 0; j < renderer.mEntityPvs[i].size; j++)
+            {
                 renderer.mEntityPvs[i].indices[j] = modelList[j];
+            }
         }
         else
         {
@@ -473,20 +504,18 @@ bool WorldLoader::setupWorld(
 {
     // Upload all the textures for this BSP in the multi texture layer 0
     glActiveTexture(GL_TEXTURE0);
-    for (int i = 0; i < renderer.mShaderManager.getTextureCount(); i++)
+    for (int i = 0; i < renderer.mShaderManager.GetTextureCount(); i++)
     {
-        Texture *texture = renderer.mShaderManager.getTexture(i);
-        //texture->mipmapping = true;
+        Texture *texture = renderer.mShaderManager.GetTexture(i);
+
         texture->glIndex = this->mConfig.resourceManager->addTexture(*texture);
-        delete[] texture->data[0];
-        texture->data[0] = nullptr;
+        texture->ClearData();
     }
 
     for (int i = 0; i < 6; i++)
     {
         renderer.mSkyRenderer.mTextures[i].glIndex = this->mConfig.resourceManager->addTexture(renderer.mSkyRenderer.mTextures[i]);
-        delete[] renderer.mSkyRenderer.mTextures[i].data[0];
-        renderer.mSkyRenderer.mTextures[i].data[0] = nullptr;
+        renderer.mSkyRenderer.mTextures[i].ClearData();
     }
 
     // Upload all the lightmaps for all the faces in this BSP in the multi texture layer 1
