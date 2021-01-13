@@ -18,12 +18,12 @@
 #include "camera.h"
 #include "math3d.h"
 #include "resources.h"
+#include "stb_truetype.h"
 #include "worldloader.h"
 
-using namespace std;
+int running = true; // Flag telling if the program is running
 
-Camera *pCam = NULL;
-void *odeSphere = NULL;
+Camera *pCam = nullptr;
 
 void glhFrustumf2(
     float *matrix,
@@ -74,52 +74,282 @@ void glhPerspectivef2(
     glhFrustumf2(matrix, -xmax, xmax, -ymax, ymax, znear, zfar);
 }
 
-std::string FindRootFromFilePath(
-    const std::string &filePath ,
-    std::string &mod
-)
+static float fontSize = 16.0f;
+unsigned char ttf_buffer[1 << 20];
+unsigned char temp_bitmap[512 * 512];
+
+stbtt_bakedchar cdata[96]; // ASCII 32..126 is 95 glyphs
+GLuint ftex;
+
+void my_stbtt_initfont()
 {
-    auto path = std::filesystem::path(filePath);
+    FILE *f = nullptr;
 
-    if (!path.has_parent_path())
+    errno_t err = fopen_s(&f, "c:/windows/fonts/SourceCodePro-Light.ttf", "rb");
+    if (err)
     {
-        spdlog::error("given path ({}) has no parent path", filePath);
-
-        return "";
+        err = fopen_s(&f, "c:/windows/fonts/consola.ttf", "rb");
     }
 
-    path = path.parent_path();
-
-    auto fn = path.filename();
-    if (path.has_parent_path() && (fn == "maps" || fn == "models" || fn == "sprites" || fn == "sound" || fn == "gfx" || fn == "env"))
+    if (err)
     {
-        path = path.parent_path();
+        spdlog::error("loading font failed");
+
+        return;
     }
 
-    auto lastDirectory = path.filename().generic_string();
+    fread(ttf_buffer, 1, 1 << 20, f);
+    stbtt_BakeFontBitmap(ttf_buffer, 0, fontSize, temp_bitmap, 512, 512, 32, 96, cdata); // no guarantee this fits!
+    // can free ttf_buffer at this point
+    glActiveTextureARB(GL_TEXTURE0);
+    glGenTextures(1, &ftex);
+    glBindTexture(GL_TEXTURE_2D, ftex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, 512, 512, 0, GL_ALPHA, GL_UNSIGNED_BYTE, temp_bitmap);
+    // can free temp_bitmap at this point
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
-    do
+    fclose(f);
+}
+
+float my_stbtt_print_width(
+    const std::string &text)
+{
+    const char *txt = text.c_str();
+
+    float x = 0;
+    float y = 0;
+
+    while (*txt)
     {
-        for (auto &p : std::filesystem::directory_iterator(path))
+        if (*txt < 32)
         {
-            if (p.is_directory())
-            {
-                continue;
-            }
-
-            if (p.path().filename() == "hl.exe" && p.path().has_parent_path())
-            {
-                mod = lastDirectory;
-                return p.path().parent_path().generic_string();
-            }
+            break;
         }
 
-        lastDirectory = path.filename().generic_string();
-        path = path.parent_path();
+        stbtt_aligned_quad q;
+        stbtt_GetBakedQuad(cdata, 512, 512, *txt - 32, &x, &y, &q, 1);
 
-    } while (path.has_parent_path() && path.parent_path() != path);
+        ++txt;
+    }
 
-    return "";
+    return x;
+}
+
+void my_stbtt_print(
+    float x,
+    float y,
+    const std::string &text)
+{
+    const char *txt = text.c_str();
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_DEPTH_TEST);
+    glActiveTextureARB(GL_TEXTURE1);
+    glDisable(GL_TEXTURE_2D);
+    glActiveTextureARB(GL_TEXTURE0);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, ftex);
+    glBegin(GL_QUADS);
+
+    while (*txt)
+    {
+        if (*txt < 32)
+        {
+            break;
+        }
+
+        stbtt_aligned_quad q;
+        stbtt_GetBakedQuad(cdata, 512, 512, *txt - 32, &x, &y, &q, 1);
+        glTexCoord2f(q.s0, q.t0);
+        glVertex2f(q.x0, q.y0);
+
+        glTexCoord2f(q.s1, q.t0);
+        glVertex2f(q.x1, q.y0);
+
+        glTexCoord2f(q.s1, q.t1);
+        glVertex2f(q.x1, q.y1);
+
+        glTexCoord2f(q.s0, q.t1);
+        glVertex2f(q.x0, q.y1);
+
+        ++txt;
+    }
+    glEnd();
+}
+
+class Console
+{
+public:
+    Console();
+
+    void Render(
+        float widt);
+
+    void AddChar(
+        unsigned int c);
+
+    void Backspace();
+
+    void Enter();
+
+    void ToggleOpen();
+
+    bool IsOpen() const { return _isOpen; }
+
+private:
+    std::vector<std::string> _lines;
+    std::string _input;
+    bool _isOpen = true;
+    float _currentPosition = 0;
+    const float _openPosition = 0;
+    const float _closePosition = -400;
+};
+
+Console::Console()
+{
+    _lines.push_back("hit ` to toggle this console");
+}
+
+void Console::Render(
+    float width)
+{
+    if (_isOpen)
+    {
+        if (_currentPosition < _openPosition)
+        {
+            _currentPosition += 20.0f;
+        }
+    }
+    else
+    {
+        if (_currentPosition > _closePosition)
+        {
+            _currentPosition -= 20.0f;
+        }
+    }
+
+    glTranslatef(0, _currentPosition, 0);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_DEPTH_TEST);
+    glActiveTextureARB(GL_TEXTURE1);
+    glDisable(GL_TEXTURE_2D);
+    glActiveTextureARB(GL_TEXTURE0);
+    glDisable(GL_TEXTURE_2D);
+
+    glBegin(GL_QUADS);
+    glColor4f(0.3f, 0.3f, 0.3f, 0.7f);
+    glVertex2f(0.0f, 0.0f);
+    glVertex2f(width, 0.0f);
+    glVertex2f(width, 400.0f);
+    glVertex2f(0.0f, 400.0f);
+    glEnd();
+
+    glColor3f(1.0f, 1.0f, 1.0f);
+    float y = 390;
+
+    my_stbtt_print(10, y, fmt::format("] {}_", _input));
+    y -= fontSize * 1.2f;
+
+    for (auto line = _lines.rbegin(); line != _lines.rend(); line++)
+    {
+        my_stbtt_print(10, y, *line);
+        y -= fontSize * 1.2f;
+    }
+}
+
+void Console::AddChar(
+    unsigned int c)
+{
+    if (c == '`')
+    {
+        return;
+    }
+
+    if (!_isOpen)
+    {
+        return;
+    }
+
+    _input += c;
+}
+
+void Console::Backspace()
+{
+    if (_input.empty())
+    {
+        return;
+    }
+
+    _input = _input.substr(0, _input.size() - 1);
+}
+
+void Console::Enter()
+{
+    if (_input.empty())
+    {
+        return;
+    }
+
+    if (_input == "exit" || _input == "quit")
+    {
+        _lines.push_back("bye!");
+        running = false;
+        _input = "";
+        return;
+    }
+
+    _lines.push_back(_input);
+    _input = "";
+}
+
+void Console::ToggleOpen()
+{
+    _isOpen = !_isOpen;
+}
+
+static Console console;
+
+void CharCallback(
+    GLFWwindow *window,
+    unsigned int codepoint)
+{
+    (void)window;
+
+    console.AddChar(codepoint);
+}
+
+void KeyCallback(
+    GLFWwindow *window,
+    int key,
+    int scancode,
+    int action,
+    int mods)
+{
+    (void)window;
+    (void)scancode;
+    (void)mods;
+
+    if (key == GLFW_KEY_GRAVE_ACCENT && (action == GLFW_PRESS || action == GLFW_REPEAT))
+    {
+        console.ToggleOpen();
+    }
+    else if (key == GLFW_KEY_BACKSPACE && (action == GLFW_PRESS || action == GLFW_REPEAT))
+    {
+        console.Backspace();
+    }
+    else if (key == GLFW_KEY_ENTER && (action == GLFW_PRESS || action == GLFW_REPEAT))
+    {
+        console.Enter();
+    }
+    else if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE)
+    {
+        running = console.IsOpen();
+        console.ToggleOpen();
+    }
 }
 
 int main(
@@ -136,7 +366,7 @@ int main(
     Camera cam;
     WorldRenderer renderer;
     std::string mod;
-    ResourceManager resources(FindRootFromFilePath(argv[1], mod), mod);
+    ResourceManager resources(ResourceManager::FindRootFromFilePath(argv[1], mod), mod);
     WorldLoader::Config config;
     config.resourceManager = &resources;
     WorldLoader loader(config);
@@ -162,9 +392,6 @@ int main(
         return 0;
     }
 
-    int ok;             // Flag telling if the window was opened
-    int running = true; // Flag telling if the program is running
-
     float rot[3] = {0};
 
     glfwInit();
@@ -186,9 +413,14 @@ int main(
         return 0;
     }
 
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetCharCallback(window, CharCallback);
+    glfwSetKeyCallback(window, KeyCallback);
     glfwMakeContextCurrent(window);
 
     gladLoadGL();
+
+    my_stbtt_initfont();
 
     glClearColor(1.0f, 0.1f, 0.3f, 1.0f);
 
@@ -214,6 +446,9 @@ int main(
     double prevTime = time;
     int fps = 0;
     float speed = 300.0f;
+    double realFps = 0;
+
+    bool closeConsoleFirstTime = true;
 
     // Main rendering loop
     while (running)
@@ -226,28 +461,36 @@ int main(
         prevTime = newTime;
         if ((newTime - time) > 1)
         {
-            double realFps = double(fps) / (newTime - time);
+            if (closeConsoleFirstTime)
+            {
+                console.ToggleOpen();
+                closeConsoleFirstTime = false;
+            }
+            realFps = double(fps) / (newTime - time);
 
             fps = 0;
             time = newTime;
         }
 
-        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        if (!console.IsOpen())
         {
-            cam.MoveLocal(float(speed * timeDiff), 0, 0);
-        }
-        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        {
-            cam.MoveLocal(float(-speed * timeDiff), 0, 0);
-        }
+            if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+            {
+                cam.MoveLocal(float(speed * timeDiff), 0, 0);
+            }
+            if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+            {
+                cam.MoveLocal(float(-speed * timeDiff), 0, 0);
+            }
 
-        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        {
-            cam.MoveLocal(0, float(speed * timeDiff), 0);
-        }
-        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        {
-            cam.MoveLocal(0, float(-speed * timeDiff), 0);
+            if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+            {
+                cam.MoveLocal(0, float(speed * timeDiff), 0);
+            }
+            if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+            {
+                cam.MoveLocal(0, float(-speed * timeDiff), 0);
+            }
         }
 
         double mx = 0, my = h / 2;
@@ -269,11 +512,37 @@ int main(
         cameraPosition.copyTo(renderer.mConfig.mViewPoint);
         renderer.render(cameraPosition);
 
+        glMatrixMode(GL_PROJECTION);
+        glPushMatrix();
+        glLoadIdentity();
+
+        glOrtho(0, w, h, 0, -1.0f, 1.0f);
+
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glLoadIdentity();
+
+        console.Render(w);
+
+        glLoadIdentity();
+        auto fpsstr = fmt::format("fps: {:.2f}", realFps);
+
+        my_stbtt_print(w - my_stbtt_print_width(fpsstr) - (fontSize * 0.4f), fontSize * 1.2f, fpsstr);
+
+        glMatrixMode(GL_PROJECTION);
+        glPopMatrix();
+
+        glMatrixMode(GL_MODELVIEW);
+        glPopMatrix();
+
         // Swap front and back buffers (we use a double buffered display)
         glfwSwapBuffers(window);
 
         // Check if the escape key was pressed, or if the window was closed
-        running = !glfwGetKey(window, GLFW_KEY_ESCAPE) && glfwGetWindowAttrib(window, GLFW_VISIBLE);
+        if (!glfwGetWindowAttrib(window, GLFW_VISIBLE))
+        {
+            running = false;
+        }
     }
 
     glfwTerminate();

@@ -74,7 +74,12 @@ public:
         const std::string &file,
         std::filesystem::path &result);
 
-    virtual unsigned int addTexture(const Texture &texture);
+    virtual unsigned int addTexture(
+        const Texture &texture);
+
+    static std::string FindRootFromFilePath(
+        const std::string &filePath,
+        std::string &mod);
 
 protected:
     std::filesystem::path _wadRoot;

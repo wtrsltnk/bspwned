@@ -61,6 +61,54 @@ IData *ResourceFile::copy() const
     return result;
 }
 
+
+std::string ResourceManager::FindRootFromFilePath(
+    const std::string &filePath ,
+    std::string &mod)
+{
+    auto path = std::filesystem::path(filePath);
+
+    if (!path.has_parent_path())
+    {
+        spdlog::error("given path ({}) has no parent path", filePath);
+
+        return "";
+    }
+
+    path = path.parent_path();
+
+    auto fn = path.filename();
+    if (path.has_parent_path() && (fn == "maps" || fn == "models" || fn == "sprites" || fn == "sound" || fn == "gfx" || fn == "env"))
+    {
+        path = path.parent_path();
+    }
+
+    auto lastDirectory = path.filename().generic_string();
+
+    do
+    {
+        for (auto &p : std::filesystem::directory_iterator(path))
+        {
+            if (p.is_directory())
+            {
+                continue;
+            }
+
+            if (p.path().filename() == "hl.exe" && p.path().has_parent_path())
+            {
+                mod = lastDirectory;
+                return p.path().parent_path().generic_string();
+            }
+        }
+
+        lastDirectory = path.filename().generic_string();
+        path = path.parent_path();
+
+    } while (path.has_parent_path() && path.parent_path() != path);
+
+    return "";
+}
+
 ResourceManager::ResourceManager(
     const std::string &wadRoot,
     const std::string &mod)
