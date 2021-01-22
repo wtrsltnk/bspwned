@@ -6,10 +6,10 @@
  */
 
 #ifndef _WORLDLOADER_H
-#define	_WORLDLOADER_H
+#define _WORLDLOADER_H
 
-#include "types.h"
 #include "interfaces.h"
+#include "types.h"
 #include "worldrenderer.h"
 
 class WorldLoader
@@ -21,31 +21,32 @@ public:
         Config();
         virtual ~Config();
 
-        IResources* resourceManager;
+        IResources *resourceManager;
     };
+
 public:
-    WorldLoader(const Config& config);
+    WorldLoader(const Config &config);
     virtual ~WorldLoader();
 
-    bool loadBSP(const std::string& filename, WorldRenderer& renderer);
-    bool loadEntities(const IData* bsp, const tBSPHeader& header, WorldRenderer& renderer);
-    bool loadFaces(const IData* bsp, const tBSPHeader& header, WorldRenderer& renderer);
-    bool loadVisiblity(const IData* bsp, const tBSPHeader& header, WorldRenderer& renderer);
-    bool loadTextures(const IData* bsp, const tBSPHeader& header, WorldRenderer& renderer);
-    bool loadShaders(const IData* bsp, const tBSPHeader& header, WorldRenderer& renderer);
+    bool loadBSP(const std::string &filename, WorldRenderer &renderer);
+    bool loadEntities(const IData *bsp, const tBSPHeader &header, WorldRenderer &renderer);
+    bool loadFaces(const IData *bsp, const tBSPHeader &header, WorldRenderer &renderer);
+    bool loadVisiblity(const IData *bsp, const tBSPHeader &header, WorldRenderer &renderer);
+    bool loadTextures(const IData *bsp, const tBSPHeader &header, WorldRenderer &renderer);
+    bool loadShaders(const IData *bsp, const tBSPHeader &header, WorldRenderer &renderer);
 
-    bool setupWorld(WorldRenderer& renderer);
-    
+    bool setupWorld(WorldRenderer &renderer);
+
 private:
-    const Config& mConfig;
+    const Config &mConfig;
 
     int mFaceCount;
-    tBSPFace* mFaces;
-    int* mShaderIndices;
+    tBSPFace *mFaces;
+    int *mShaderIndices;
 
     /// Creates the array accoording to the lump given. Don't forget to remove the data block!
     template <typename T>
-    int loadLump(T** array, const tBSPLump& lump, const IData* data)
+    int loadLump(T **array, const tBSPLump &lump, const IData *data)
     {
         int count = lump.size / sizeof(T);
         *array = new T[count];
@@ -53,7 +54,20 @@ private:
         return count;
     }
 
+    /// Creates the array accoording to the lump given. Don't forget to remove the data block!
+    template <typename T>
+    std::unique_ptr<T> loadLump(const tBSPLump &lump, const IData *data, int *returnCount = nullptr)
+    {
+        int count = lump.size / sizeof(T);
+        T *array = new T[count];
+        data->read(array, count, lump.offset);
+        if (returnCount != nullptr)
+        {
+            *returnCount = count;
+        }
+
+        return std::unique_ptr<T>(array);
+    }
 };
 
-#endif	/* _WORLDLOADER_H */
-
+#endif /* _WORLDLOADER_H */

@@ -7,68 +7,57 @@
 
 #include "tokenizer.h"
 
-#include <string>
+Tokenizer::Tokenizer(
+    std::unique_ptr<unsigned char> &data,
+    int size)
+    : _data(data),
+      _dataSize(size),
+      _cursor(0),
+      _token("")
+{}
 
-using namespace std;
+Tokenizer::~Tokenizer() = default;
 
-class Tokenizer::PIMPL
-{
-public:
-    PIMPL(const unsigned char* data, int size) : mData(data), mDataSize(size), mCursor(0) {}
-    const unsigned char* mData;
-    int mDataSize;
-    int mCursor;
-    string mToken;
-};
-
-Tokenizer::Tokenizer(const unsigned char* data, int size)
-        : pimpl(new Tokenizer::PIMPL(data, size))
-{
-    pimpl->mToken = "";
-}
-
-Tokenizer::~Tokenizer()
-{
-    delete pimpl;
-}
-
-bool isSpaceCharacter(const char c)
+bool isSpaceCharacter(
+    const char c)
 {
     return (c <= ' ');
 }
 
 bool Tokenizer::nextToken()
 {
-    pimpl->mToken = "";
+    _token = "";
 
-    while (pimpl->mCursor <= pimpl->mDataSize && isSpaceCharacter(pimpl->mData[pimpl->mCursor]))
-		pimpl->mCursor++;
-
-    if (pimpl->mData[pimpl->mCursor] == '\"')
+    while (_cursor <= _dataSize && isSpaceCharacter(_data.get()[_cursor]))
     {
-        pimpl->mCursor++;
+        _cursor++;
+    }
 
-        while (pimpl->mCursor <= pimpl->mDataSize && pimpl->mData[pimpl->mCursor] != '\"')
+    if (_data.get()[_cursor] == '\"')
+    {
+        _cursor++;
+
+        while (_cursor <= _dataSize && _data.get()[_cursor] != '\"')
         {
-            pimpl->mToken += pimpl->mData[pimpl->mCursor];
-            pimpl->mCursor++;
+            _token += _data.get()[_cursor];
+            _cursor++;
         }
 
-        pimpl->mCursor++;
+        _cursor++;
     }
     else
     {
-        while (pimpl->mCursor <= pimpl->mDataSize && !isSpaceCharacter(pimpl->mData[pimpl->mCursor]))
+        while (_cursor <= _dataSize && !isSpaceCharacter(_data.get()[_cursor]))
         {
-            pimpl->mToken += pimpl->mData[pimpl->mCursor];
-            pimpl->mCursor++;
+            _token += _data.get()[_cursor];
+            _cursor++;
         }
     }
 
-    return (pimpl->mCursor < pimpl->mDataSize);
+    return (_cursor < _dataSize);
 }
 
-const char* Tokenizer::getToken() const
+const std::string &Tokenizer::getToken() const
 {
-    return pimpl->mToken.c_str();
+    return _token;
 }

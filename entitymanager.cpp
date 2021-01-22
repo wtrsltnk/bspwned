@@ -16,26 +16,15 @@
 
 EntityManager::EntityManager() = default;
 
-EntityManager::~EntityManager()
-{
-    while (!mEntities.empty())
-    {
-        tEntity *entity = mEntities.back();
-
-        mEntities.pop_back();
-
-        delete[] entity->values;
-        delete entity;
-    }
-}
+EntityManager::~EntityManager() = default;
 
 bool EntityManager::parseFromBSPEntityData(
-    unsigned char *data,
+    std::unique_ptr<unsigned char> &data,
     int size)
 {
     Tokenizer tok(data, size);
 
-    while (tok.nextToken() && strcmp(tok.getToken(), "{") == 0)
+    while (tok.nextToken() && tok.getToken() == "{")
     {
         if (!parseEntity(tok))
         {
@@ -50,7 +39,8 @@ bool EntityManager::parseEntity(
     Tokenizer &tok)
 {
     std::vector<tEntityValue> values;
-    while (tok.nextToken() && strcmp(tok.getToken(), "}") != 0)
+
+    while (tok.nextToken() && tok.getToken() != "}")
     {
         std::string key = tok.getToken();
         if (!tok.nextToken())
@@ -71,65 +61,55 @@ bool EntityManager::parseEntity(
         values.push_back(eValue);
     }
 
-    if (values.size() > 0)
+    if (values.size() == 0)
     {
-        tEntity *entity = new tEntity;
-        entity->valueCount = values.size();
-        entity->values = new tEntityValue[entity->valueCount];
-
-        for (int i = 0; i < entity->valueCount; i++)
-        {
-            entity->values[i] = values[i];
-            if (values[i].key == "classname")
-            {
-                entity->className = values[i].value;
-            }
-        }
-        mEntities.push_back(entity);
+        return false;
     }
+
+    tEntity entity;
+
+    entity.values = values;
+
+    for (auto &value : values)
+    {
+        if (value.key == "classname")
+        {
+            entity.className = value.value;
+        }
+    }
+
+    mEntities.push_back(entity);
+
     return true;
 }
 
 int EntityManager::addEntity(
-    tEntity *entity)
+    const tEntity &entity)
 {
     mEntities.push_back(entity);
 
-    return mEntities.size() - 1;
+    return static_cast<int>(mEntities.size() - 1);
 }
 
-int EntityManager::getEntityCount() const
+const std::vector<tEntity> &EntityManager::getEntities() const
 {
-    return mEntities.size();
-}
-
-const tEntity *EntityManager::getEntity(
-    int index) const
-{
-    if (index >= 0 && index < this->getEntityCount())
-    {
-        return mEntities[index];
-    }
-
-    return nullptr;
+    return mEntities;
 }
 
 glm::vec3 EntityManager::getPlayerStart() const
 {
     glm::vec3 position;
 
-    for (int i = 0; i < this->getEntityCount(); i++)
+    for (auto &entity : mEntities)
     {
-        tEntity *entity = mEntities[i];
-        std::string entityname = entity->className;
+        std::string entityname = entity.className;
         if (entityname != "info_player_start")
         {
             continue;
         }
 
-        for (int j = 0; j < entity->valueCount; j++)
+        for (auto &value : entity.values)
         {
-            tEntityValue &value = entity->values[j];
             std::string valuename = value.key;
             if (valuename == "origin")
             {
@@ -139,4 +119,6 @@ glm::vec3 EntityManager::getPlayerStart() const
             }
         }
     }
+
+    return position;
 }

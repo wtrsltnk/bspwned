@@ -132,19 +132,16 @@ bool WorldLoader::loadEntities(
     const tBSPHeader &header,
     WorldRenderer &renderer)
 {
-    // Create a buffer and load the entuty data from the bsp into this buffer
-    unsigned char *data = new unsigned char[header.lumps[HL1_BSP_ENTITYLUMP].size];
-    bsp->read(data, header.lumps[HL1_BSP_ENTITYLUMP].size, header.lumps[HL1_BSP_ENTITYLUMP].offset);
-
     // Load the face data from the BSP in a buffer
     this->mFaceCount = loadLump(&this->mFaces, header.lumps[HL1_BSP_FACELUMP], bsp);
     this->mShaderIndices = new int[this->mFaceCount];
 
+    // Create a buffer and load the entuty data from the bsp into this buffer
+    auto data = loadLump<unsigned char>(header.lumps[HL1_BSP_ENTITYLUMP], bsp);
+
     // Parse the raw entity data
     renderer.mEntityManager.parseFromBSPEntityData(data, header.lumps[HL1_BSP_ENTITYLUMP].size);
 
-    // Cleanup
-    delete[] data;
     return true;
 }
 
@@ -157,27 +154,24 @@ bool WorldLoader::loadTextures(
     TextureLoader tl(this->mConfig.resourceManager, &renderer.mEntityManager);
 
     // Create a buffer and load the texture data from the bsp into this buffer
-    unsigned char *buffer = new unsigned char[header.lumps[HL1_BSP_TEXTURELUMP].size];
-    bsp->read(buffer, header.lumps[HL1_BSP_TEXTURELUMP].size, header.lumps[HL1_BSP_TEXTURELUMP].offset);
+    auto buffer = loadLump<unsigned char>(header.lumps[HL1_BSP_TEXTURELUMP], bsp);
 
-    int textureCount = ((int *)buffer)[0];
+    int textureCount = ((int *)buffer.get())[0];
     // The first integer in the buffer contains the number of textures, which we use to build a texture array with
     renderer.mShaderManager.SetTextureCount(textureCount);
 
     // After the first integer, there follow the offsets for each texture header in the BSP file
-    int *textureOffsets = &((int *)buffer)[1];
+    int *textureOffsets = &((int *)buffer.get())[1];
 
     // Parse the texture data into nice texture objects ready for use by OpenGL
     for (int i = 0; i < textureCount; i++)
     {
         Texture *texture = renderer.mShaderManager.GetTexture(i);
-        tl.getWadTexture(*texture, buffer + textureOffsets[i]);
+        tl.getWadTexture(*texture, buffer.get() + textureOffsets[i]);
     }
 
     tl.getSkyTextures(renderer.mSkyRenderer.mTextures);
 
-    // Cleanup
-    delete[] buffer;
     return true;
 }
 
@@ -187,28 +181,25 @@ bool WorldLoader::loadShaders(
     WorldRenderer &renderer)
 {
     // Load the tex info data from the BSP in a buffer
-    tBSPTexInfo *texinfos = nullptr;
-    loadLump(&texinfos, header.lumps[HL1_BSP_TEXINFOLUMP], bsp);
+    auto texinfos = loadLump<tBSPTexInfo>(header.lumps[HL1_BSP_TEXINFOLUMP], bsp);
 
     // Parse all the value-key pairs in the entity to find render properties for models
-    for (int i = 0; i < renderer.mEntityManager.getEntityCount(); i++)
+    for (auto &entity : renderer.mEntityManager.getEntities())
     {
         int modelIndex = -1;
         float fxAmount = 1.0f;
         float fxColor[3] = {1.0f, 1.0f, 1.0f};
         int fxMode = 4;
         float origin[3] = {0};
-        const tEntity *entity = renderer.mEntityManager.getEntity(i);
 
-        for (int j = 0; j < entity->valueCount; j++)
+        for (auto &value : entity.values)
         {
-            std::string key = entity->values[j].key;
+            std::string key = value.key;
 
             // Save the values of some variables that are needed for rendering
             if (key == "classname")
             {
-                std::string value = entity->values[j].value;
-                if (value == "worldspawn")
+                if (value.value == "worldspawn")
                 {
                     modelIndex = 0;
                 }
@@ -216,7 +207,7 @@ bool WorldLoader::loadShaders(
             if (key == "model")
             {
                 char astrix;
-                std::istringstream(entity->values[j].value) >> astrix >> modelIndex;
+                std::istringstream(value.value) >> astrix >> modelIndex;
                 if (modelIndex == 0)
                 {
                     modelIndex = -1;
@@ -224,16 +215,16 @@ bool WorldLoader::loadShaders(
             }
             if (key == "origin")
             {
-                std::istringstream(entity->values[j].value) >> origin[0] >> origin[1] >> origin[2];
+                std::istringstream(value.value) >> origin[0] >> origin[1] >> origin[2];
             }
             if (key == "rendermode")
             {
-                std::istringstream(entity->values[j].value) >> fxMode;
+                std::istringstream(value.value) >> fxMode;
             }
             if (key == "rendercolor")
             {
                 int r, g, b;
-                std::istringstream(entity->values[j].value) >> r >> g >> b;
+                std::istringstream(value.value) >> r >> g >> b;
                 if (r || g || b)
                 {
                     fxColor[0] = (float)r / 255.0f;
@@ -244,7 +235,7 @@ bool WorldLoader::loadShaders(
             if (key == "renderamt")
             {
                 int renderamt;
-                std::istringstream(entity->values[j].value) >> renderamt;
+                std::istringstream(value.value) >> renderamt;
                 fxAmount = (float)renderamt / 255.0f;
             }
         }
@@ -259,11 +250,12 @@ bool WorldLoader::loadShaders(
         for (int i = 0; i < model.faceCount; i++)
         {
             tBSPFace &bspFace = this->mFaces[model.firstFace + i];
-            tBSPTexInfo &texinfo = texinfos[bspFace.texinfo];
+            tBSPTexInfo &texinfo = texinfos.get()[bspFace.texinfo];
 
             this->mShaderIndices[model.firstFace + i] = renderer.mShaderManager.AddShader(texinfo.miptexIndex, fxMode, fxAmount, fxColor);
         }
     }
+
     return true;
 }
 

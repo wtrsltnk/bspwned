@@ -231,57 +231,51 @@ void TextureLoader::openWadFiles(
 const std::string &TextureLoader::getWadString(
     EntityManager *entities)
 {
-    int entityCount = entities->getEntityCount();
-
-    for (int i = 0; i < entityCount; i++)
+    for (auto &entity : entities->getEntities())
     {
-        const tEntity *entity = entities->getEntity(i);
-
-        if (entity->className != "worldspawn")
+        if (entity.className != "worldspawn")
         {
             continue;
         }
 
-        for (int j = 0; j < entity->valueCount; j++)
+        for (auto &value : entity.values)
         {
-            if (entity->values[j].key != "wad")
+            if (value.key != "wad")
             {
                 continue;
             }
 
-            return entity->values[j].value;
+            return value.value;
         }
     }
 
     static std::string empty("");
+
     return empty;
 }
 
 const std::string &TextureLoader::getSkyString(
     EntityManager *entities)
 {
-    int entityCount = entities->getEntityCount();
-
-    for (int i = 0; i < entityCount; i++)
+    for (auto &entity : entities->getEntities())
     {
-        const tEntity *entity = entities->getEntity(i);
-
-        if (entity->className != "worldspawn")
+        if (entity.className != "worldspawn")
         {
             continue;
         }
 
-        for (int j = 0; j < entity->valueCount; j++)
+        for (auto &value : entity.values)
         {
-            if (entity->values[j].key != "skyname")
+            if (value.key != "skyname")
             {
                 continue;
             }
 
-            return entity->values[j].value;
+            return value.value;
         }
     }
 
     static std::string empty("");
+
     return empty;
 }

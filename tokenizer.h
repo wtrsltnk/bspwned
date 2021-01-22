@@ -6,22 +6,29 @@
  */
 
 #ifndef _TOKENIZER_H
-#define	_TOKENIZER_H
+#define _TOKENIZER_H
+
+#include <memory>
+#include <string>
 
 class Tokenizer
 {
 public:
-    Tokenizer(const unsigned char* data, int size);
+    Tokenizer(
+        std::unique_ptr<unsigned char> &data,
+        int size);
+
     virtual ~Tokenizer();
 
     bool nextToken();
-    const char* getToken() const;
-    
-private:
-    class PIMPL;
-    PIMPL* pimpl;
 
+    const std::string &getToken() const;
+
+private:
+    std::unique_ptr<unsigned char> &_data;
+    int _dataSize;
+    int _cursor;
+    std::string _token;
 };
 
-#endif	/* _TOKENIZER_H */
-
+#endif /* _TOKENIZER_H */

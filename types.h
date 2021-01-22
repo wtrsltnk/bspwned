@@ -10,6 +10,7 @@
 
 #include <glm/glm.hpp>
 #include <string>
+#include <vector>
 
 #define HL1_BSP_SIGNATURE 30
 #define HL1_BSP_LUMPCOUNT 15
@@ -203,8 +204,7 @@ typedef struct sEntityValue
 typedef struct sEntity
 {
     std::string className;
-    int valueCount;
-    tEntityValue *values;
+    std::vector<tEntityValue> values;
 
 } tEntity;
 

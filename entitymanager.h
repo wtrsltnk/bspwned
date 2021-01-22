@@ -22,21 +22,18 @@ public:
     virtual ~EntityManager();
 
     bool parseFromBSPEntityData(
-        unsigned char *data,
+        std::unique_ptr<unsigned char> &data,
         int size);
 
     int addEntity(
-        tEntity *entity);
+        const tEntity &entity);
 
-    int getEntityCount() const;
-
-    const tEntity *getEntity(
-        int index) const;
+    const std::vector<tEntity> &getEntities() const;
 
     glm::vec3 getPlayerStart() const;
 
 private:
-    std::vector<tEntity *> mEntities;
+    std::vector<tEntity> mEntities;
 
     bool parseEntity(
         Tokenizer &tok);
