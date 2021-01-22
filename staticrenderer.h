@@ -23,34 +23,28 @@ public:
 
     void setupArrays();
 
-    void setFaceCount(
-        int count);
-
-    int getFaceCount() const;
-
     void setShaderCount(
         int count);
 
     int getShaderCount() const;
 
-    void addVertex(
-        const tVertex &vertex);
+    void setFaceAndVertexData(
+        const std::vector<tFace> &faces,
+        const std::vector<tVertex> &vertices);
 
-    int getCurrentVertex() const;
+    const std::vector<tFace> &getFaces() const;
 
-    void setFace(
-        const tFace &face,
-        int index);
+    const std::vector<tVertex> &getVertices() const;
 
-    const tFace &getFace(
-        int index) const;
-
-    void renderAllFaces();
+    void renderAllFaces(
+        class ShaderManager *shaderManager);
 
     void renderVisibleFaces(
+        ShaderManager *shaderManager,
         bool visibleFaces[]);
 
     void renderFace(
+        ShaderManager *shaderManager,
         int face);
 
     void enableTextures(
@@ -62,19 +56,21 @@ public:
     void textureRenderSetup();
 
     static bool testFaceVisibility(
+        ShaderManager *shaderManager,
         const tFace &face);
 
 private:
-    std::vector<tVertex> mVertices;
+    std::vector<tVertex> _vertices;
 
-    std::vector<tFace> mFaces;
+    std::vector<tFace> _faces;
 
-    int mShaderCount = 0;
+    int _shaderCount = 0;
 
-    bool mTexturesEnabled = false;
-    bool mLightmapEnabled = false;
+    bool _texturesEnabled = false;
+    bool _lightmapEnabled = false;
 
     void renderFace(
+        ShaderManager *shaderManager,
         const tFace *face);
 };
 

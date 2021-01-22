@@ -28,13 +28,14 @@ public:
         Config();
         virtual ~Config();
 
-        glm::vec3 mViewPoint;
-        IFrustum *mFrustum;
+        glm::vec3 _viewPoint;
+        IFrustum *_frustum;
 
-    } mConfig;
+    } _config;
 
 public:
-    WorldRenderer();
+    WorldRenderer(
+        ShaderManager &shaderManager);
 
     virtual ~WorldRenderer();
 
@@ -47,7 +48,6 @@ public:
 
     int findLeaf(
         const glm::vec3 &position,
-        tBSPPlane *plane = NULL,
         float offset = 0);
 
     bool testFaceVisibility(
@@ -56,28 +56,30 @@ public:
     glm::vec3 getPlayerStart() const;
 
 private:
-    StaticRenderer mStaticRenderer;
-    SkyRenderer mSkyRenderer;
-    EntityManager mEntityManager;
-    ShaderManager &mShaderManager;
+    StaticRenderer _staticRenderer;
+    SkyRenderer _skyRenderer;
+    EntityManager _entityManager;
+    ShaderManager &_shaderManager;
 
-    tBSPIndexList *mPvs;
-    tBSPIndexList *mEntityPvs;
+    tBSPIndexList *_pvs = nullptr;
+    tBSPIndexList *_entityPvs = nullptr;
 
-    int mLeafCount;
-    tBSPLeaf *mLeafs;
+    int _leafCount = 0;
+    tBSPLeaf *_leafs = nullptr;
 
-    int mPlaneCount;
-    tBSPPlane *mPlanes;
+    int _planeCount = 0;
+    tBSPPlane *_planes = nullptr;
 
-    int mModelCount;
-    tBSPModel *mModels;
+    int _modelCount = 0;
+    tBSPModel *_models = nullptr;
 
-    int mNodeCount;
-    tBSPNode *mNodes;
+    int _nodeCount = 0;
+    tBSPNode *_nodes = nullptr;
 
-    int mMarkSurfaceCount;
-    unsigned short *mMarkSurfaces;
+    int _markSurfaceCount = 0;
+    unsigned short *_markSurfaces = nullptr;
+
+    bool *_visibleFaceIndices = nullptr;
 };
 
 #endif /* _WORLDRENDERER_H */

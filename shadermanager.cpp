@@ -22,33 +22,6 @@ typedef struct sShaderList
 
 } tShaderList;
 
-ShaderManager *ShaderManager::createSingleton()
-{
-    if (ShaderManager::sSingleton == nullptr)
-    {
-        ShaderManager::sSingleton = new ShaderManager();
-    }
-
-    return ShaderManager::sSingleton;
-}
-
-ShaderManager *ShaderManager::singleton()
-{
-    return ShaderManager::sSingleton;
-}
-
-void ShaderManager::destroySingleton()
-{
-    if (ShaderManager::sSingleton != nullptr)
-    {
-        delete ShaderManager::sSingleton;
-    }
-
-    ShaderManager::sSingleton = nullptr;
-}
-
-ShaderManager *ShaderManager::sSingleton = nullptr;
-
 ShaderManager::ShaderManager()
 {
     _textureCount = 0;

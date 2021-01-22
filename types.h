@@ -251,8 +251,8 @@ typedef struct sShader
 
 typedef struct sFace
 {
-    int firstVertex; // Index of the first vertex to render
-    int vertexCount; // Number of vertices to render
+    unsigned int firstVertex; // Index of the first vertex to render
+    unsigned int vertexCount; // Number of vertices to render
     int faceFlags;   // Flags for specifing special faces types
     int faceType;    // The type of face: GL_TRIANGLES, GL_QUADS, GL_POLYGONS
 

@@ -15,12 +15,12 @@ using namespace std;
 WADLoader::WADLoader(
     const IData *data,
     const std::string &filename)
-    : mFilename(filename),
-      mData(std::unique_ptr<IData>(data->copy()))
+    : _filename(filename),
+      _fileData(std::unique_ptr<IData>(data->copy()))
 {
-    mData->read(&mHeader);
-    mLumps = std::unique_ptr<tWADLump[]>(new tWADLump[mHeader.lumpsCount]);
-    mData->read(mLumps.get(), mHeader.lumpsCount, mHeader.lumpsOffset);
+    _fileData->read(&_header);
+    _lumps = std::unique_ptr<tWADLump[]>(new tWADLump[_header.lumpsCount]);
+    _fileData->read(_lumps.get(), _header.lumpsCount, _header.lumpsOffset);
 }
 
 WADLoader::~WADLoader() = default;
@@ -28,11 +28,11 @@ WADLoader::~WADLoader() = default;
 const unsigned char *WADLoader::getTextureData(
     const std::string &name) const
 {
-    for (int i = 0; i < mHeader.lumpsCount; i++)
+    for (int i = 0; i < _header.lumpsCount; i++)
     {
-        if (iequals(mLumps[i].name, name))
+        if (iequals(_lumps[i].name, name))
         {
-            return mData->Data() + mLumps[i].offset;
+            return _fileData->Data() + _lumps[i].offset;
         }
     }
 

@@ -32,10 +32,10 @@ public:
         Texture texture[6]);
     
 private:
-    IResources *mResources;
-    EntityManager *mEntities;
+    IResources *_resources;
+    EntityManager *_entities;
 
-    std::vector<class WADLoader *> mWadFiles;
+    std::vector<class WADLoader *> _wadFiles;
 
     void openWadFiles(
         const std::string &wadString);

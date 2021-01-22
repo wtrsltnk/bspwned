@@ -20,8 +20,8 @@ typedef vector<int> IndexList;
 
 StaticRenderer::StaticRenderer()
 {
-    mTexturesEnabled = true;
-    mLightmapEnabled = false;
+    _texturesEnabled = true;
+    _lightmapEnabled = false;
 }
 
 StaticRenderer::~StaticRenderer()
@@ -30,104 +30,85 @@ StaticRenderer::~StaticRenderer()
 void StaticRenderer::setupArrays()
 {
     glEnableClientState(GL_VERTEX_ARRAY);
-    glVertexPointer(3, GL_FLOAT, sizeof(tVertex), &mVertices[0].xyz[0]);
+    glVertexPointer(3, GL_FLOAT, sizeof(tVertex), &_vertices[0].xyz[0]);
 
     glClientActiveTexture(GL_TEXTURE0);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glTexCoordPointer(2, GL_FLOAT, sizeof(tVertex), &mVertices[0].st[0]);
+    glTexCoordPointer(2, GL_FLOAT, sizeof(tVertex), &_vertices[0].st[0]);
 
     glClientActiveTexture(GL_TEXTURE1);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glTexCoordPointer(2, GL_FLOAT, sizeof(tVertex), &mVertices[0].lslt[0]);
-}
-
-void StaticRenderer::setFaceCount(
-    int count)
-{
-    mFaces = std::vector<tFace>(count);
-}
-
-int StaticRenderer::getFaceCount() const
-{
-    return static_cast<int>(mFaces.size());
+    glTexCoordPointer(2, GL_FLOAT, sizeof(tVertex), &_vertices[0].lslt[0]);
 }
 
 void StaticRenderer::setShaderCount(
     int count)
 {
-    mShaderCount = count;
+    _shaderCount = count;
 }
 
 int StaticRenderer::getShaderCount() const
 {
-    return mShaderCount;
+    return _shaderCount;
 }
 
-void StaticRenderer::addVertex(
-    const tVertex &vertex)
+void StaticRenderer::setFaceAndVertexData(
+    const std::vector<tFace> &faces,
+    const std::vector<tVertex> &vertices)
 {
-    mVertices.push_back(vertex);
+    _faces = faces;
+    _vertices = vertices;
 }
 
-int StaticRenderer::getCurrentVertex() const
+const std::vector<tFace> &StaticRenderer::getFaces() const
 {
-    return static_cast<int>(mVertices.size());
+    return _faces;
 }
 
-void StaticRenderer::setFace(
-    const tFace &face,
-    int index)
+const std::vector<tVertex> &StaticRenderer::getVertices() const
 {
-    if (index >= 0 && index < getFaceCount())
+    return _vertices;
+}
+
+void StaticRenderer::renderAllFaces(
+    ShaderManager *shaderManager)
+{
+    for (auto &face : _faces)
     {
-        mFaces[index] = face;
-    }
-}
-
-const tFace &StaticRenderer::getFace(
-    int index) const
-{
-    return mFaces[index];
-}
-
-void StaticRenderer::renderAllFaces()
-{
-    ShaderManager *shaderManager = ShaderManager::singleton();
-    for (int i = 0; i < getFaceCount(); i++)
-    {
-        tFace &face = mFaces[i];
         shaderManager->UseShader(face.shaderIndex);
-        renderFace(&face);
+        renderFace(shaderManager, &face);
     }
 }
 
 void StaticRenderer::renderVisibleFaces(
+    ShaderManager *shaderManager,
     bool visibleFaces[])
 {
-    ShaderManager *shaderManager = ShaderManager::singleton();
-    for (int i = 0; i < getFaceCount(); i++)
+    for (unsigned int i = 0; i < _faces.size(); i++)
     {
         if (visibleFaces[i])
         {
-            tFace &face = mFaces[i];
+            tFace &face = _faces[i];
             shaderManager->UseShader(face.shaderIndex);
-            renderFace(&face);
+            renderFace(shaderManager, &face);
         }
     }
 }
 
 void StaticRenderer::renderFace(
+    ShaderManager *shaderManager,
     int face)
 {
-    ShaderManager::singleton()->UseShader(mFaces[face].shaderIndex);
+    shaderManager->UseShader(_faces[face].shaderIndex);
 
-    renderFace(&mFaces[face]);
+    renderFace(shaderManager, &_faces[face]);
 }
 
 void StaticRenderer::renderFace(
+    ShaderManager *shaderManager,
     const tFace *face)
 {
-    if (mLightmapEnabled)
+    if (_lightmapEnabled)
     {
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, face->lightmap->glIndex);
@@ -138,19 +119,19 @@ void StaticRenderer::renderFace(
 void StaticRenderer::enableTextures(
     bool enable)
 {
-    mTexturesEnabled = enable;
+    _texturesEnabled = enable;
 }
 
 void StaticRenderer::enableLightmaps(
     bool enable)
 {
-    mLightmapEnabled = enable;
+    _lightmapEnabled = enable;
 }
 
 void StaticRenderer::textureRenderSetup()
 {
     glActiveTexture(GL_TEXTURE0);
-    if (mTexturesEnabled)
+    if (_texturesEnabled)
     {
         glEnable(GL_TEXTURE_2D);
     }
@@ -160,7 +141,7 @@ void StaticRenderer::textureRenderSetup()
     }
 
     glActiveTexture(GL_TEXTURE1);
-    if (mLightmapEnabled)
+    if (_lightmapEnabled)
     {
         glEnable(GL_TEXTURE_2D);
     }
@@ -171,9 +152,10 @@ void StaticRenderer::textureRenderSetup()
 }
 
 bool StaticRenderer::testFaceVisibility(
+    ShaderManager *shaderManager,
     const tFace &face)
 {
-    const tShader *shader = ShaderManager::singleton()->GetShader(face.shaderIndex);
+    const tShader *shader = shaderManager->GetShader(face.shaderIndex);
 
     return !(shader->flags & SHADER_FLAG_SPECIALTEXTURE);
 }

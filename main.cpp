@@ -373,7 +373,8 @@ int main(
     }
 
     Camera cam;
-    WorldRenderer renderer;
+    ShaderManager shaderManager;
+    WorldRenderer renderer(shaderManager);
     std::string mod;
     ResourceManager resources(ResourceManager::FindRootFromFilePath(argv[1], mod), mod);
     WorldLoader::Config config;
@@ -520,7 +521,7 @@ int main(
 
         glm::vec3 cameraPosition = cam.getPosition();
         cameraPosition *= -1;
-        renderer.mConfig.mViewPoint = cameraPosition;
+        renderer._config._viewPoint = cameraPosition;
         renderer.render(cameraPosition);
 
         glMatrixMode(GL_PROJECTION);

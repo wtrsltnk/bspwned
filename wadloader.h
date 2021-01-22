@@ -24,10 +24,10 @@ public:
         const std::string &name) const;
 
 private:
-    std::string mFilename;
-    std::unique_ptr<IData> mData;
-    tWADHeader mHeader;
-    std::unique_ptr<tWADLump[]> mLumps;
+    std::string _filename;
+    std::unique_ptr<IData> _fileData;
+    tWADHeader _header;
+    std::unique_ptr<tWADLump[]> _lumps;
 };
 
 #endif /* _WADLOADER_H */

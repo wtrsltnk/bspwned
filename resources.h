@@ -17,7 +17,8 @@
 #include <stdio.h>
 #include <string>
 
-class ResourceFile : public IData
+class ResourceFile :
+    public IData
 {
 public:
     ResourceFile(
@@ -42,7 +43,8 @@ private:
 
 typedef std::map<std::string, ResourceFile *> FileList;
 
-class ResourceManager : public IResources
+class ResourceManager :
+    public IResources
 {
 public:
     ResourceManager(

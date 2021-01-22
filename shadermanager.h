@@ -16,15 +16,8 @@ class Texture;
 class ShaderManager
 {
 public:
-    static ShaderManager *createSingleton();
-    static ShaderManager *singleton();
-    static void destroySingleton();
-
-private:
-    static ShaderManager *sSingleton;
     ShaderManager();
 
-public:
     virtual ~ShaderManager();
 
     void SetTextureCount(

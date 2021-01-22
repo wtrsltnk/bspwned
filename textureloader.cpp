@@ -24,25 +24,25 @@ TextureLoader::TextureLoader(
     IResources *resources,
     EntityManager *entities)
 {
-    mResources = resources;
-    mEntities = entities;
+    _resources = resources;
+    _entities = entities;
 
     openWadFiles(getWadString(entities));
 }
 
 TextureLoader::~TextureLoader()
 {
-    while (!mWadFiles.empty())
+    while (!_wadFiles.empty())
     {
-        delete mWadFiles.back();
-        mWadFiles.pop_back();
+        delete _wadFiles.back();
+        _wadFiles.pop_back();
     }
 }
 
 bool TextureLoader::getSkyTextures(
     Texture texture[6])
 {
-    const std::string &skyname = getSkyString(mEntities);
+    const std::string &skyname = getSkyString(_entities);
 
     if (skyname.empty())
     {
@@ -58,13 +58,13 @@ bool TextureLoader::getSkyTextures(
         texture[i].repeat = false;
 
         auto name = fmt::format("{}{}.tga", skyname, shortNames[i]);
-        if (mResources->openFileAsTexture(texture[i], name))
+        if (_resources->openFileAsTexture(texture[i], name))
         {
             continue;
         }
 
         name = fmt::format("{}{}.bmp", skyname, shortNames[i]);
-        if (!mResources->openFileAsTexture(texture[i], name))
+        if (!_resources->openFileAsTexture(texture[i], name))
         {
             spdlog::error("failed to load sky texture {}{} as both tga and bmp", skyname, shortNames[i]);
 
@@ -88,7 +88,7 @@ bool TextureLoader::getWadTexture(
         return readTexture(texture, textureData);
     }
 
-    for (vector<WADLoader *>::const_iterator itr = mWadFiles.begin(); itr != mWadFiles.end(); ++itr)
+    for (vector<WADLoader *>::const_iterator itr = _wadFiles.begin(); itr != _wadFiles.end(); ++itr)
     {
         WADLoader *wadFile = *itr;
         const unsigned char *data = wadFile->getTextureData(header->name);
@@ -194,7 +194,7 @@ bool TextureLoader::readTexture(
 void TextureLoader::openWadFiles(
     const std::string &wadString)
 {
-    if (mResources == nullptr)
+    if (_resources == nullptr)
     {
         return;
     }
@@ -208,14 +208,14 @@ void TextureLoader::openWadFiles(
         // Strip the found wadfile of its path
         std::string stripedWad = wad.substr(wad.find_last_of('\\') + 1);
         // Read the wad file
-        auto wadFile = mResources->findFile(stripedWad);
+        auto wadFile = _resources->findFile(stripedWad);
         // Add it to the wad list if it is not NULL
         if (!wadFile.empty())
         {
-            const IData *data = mResources->openFile(wadFile);
+            const IData *data = _resources->openFile(wadFile);
             if (data != NULL)
             {
-                mWadFiles.push_back(new WADLoader(data, wadFile.c_str()));
+                _wadFiles.push_back(new WADLoader(data, wadFile.c_str()));
             }
             else
             {
