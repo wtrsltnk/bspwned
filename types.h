@@ -9,6 +9,7 @@
 #define _BSP_TYPES_H
 
 #include <glm/glm.hpp>
+#include <string>
 
 #define HL1_BSP_SIGNATURE 30
 #define HL1_BSP_LUMPCOUNT 15
@@ -194,14 +195,14 @@ typedef struct sWADLump
 
 typedef struct sEntityValue
 {
-    char *key;
-    char *value;
+    std::string key;
+    std::string value;
 
 } tEntityValue;
 
 typedef struct sEntity
 {
-    char className[64];
+    std::string className;
     int valueCount;
     tEntityValue *values;
 

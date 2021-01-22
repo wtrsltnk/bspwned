@@ -42,9 +42,9 @@ TextureLoader::~TextureLoader()
 bool TextureLoader::getSkyTextures(
     Texture texture[6])
 {
-    const char *skyname = getSkyString(mEntities);
+    const std::string &skyname = getSkyString(mEntities);
 
-    if (skyname == nullptr)
+    if (skyname.empty())
     {
         spdlog::error("no sky to load");
 
@@ -228,7 +228,7 @@ void TextureLoader::openWadFiles(
     }
 }
 
-const char *TextureLoader::getWadString(
+const std::string &TextureLoader::getWadString(
     EntityManager *entities)
 {
     int entityCount = entities->getEntityCount();
@@ -237,14 +237,14 @@ const char *TextureLoader::getWadString(
     {
         const tEntity *entity = entities->getEntity(i);
 
-        if (strcmp(entity->className, "worldspawn") != 0)
+        if (entity->className != "worldspawn")
         {
             continue;
         }
 
         for (int j = 0; j < entity->valueCount; j++)
         {
-            if (strcmp(entity->values[j].key, "wad") != 0)
+            if (entity->values[j].key != "wad")
             {
                 continue;
             }
@@ -253,10 +253,11 @@ const char *TextureLoader::getWadString(
         }
     }
 
-    return nullptr;
+    static std::string empty("");
+    return empty;
 }
 
-const char *TextureLoader::getSkyString(
+const std::string &TextureLoader::getSkyString(
     EntityManager *entities)
 {
     int entityCount = entities->getEntityCount();
@@ -265,14 +266,14 @@ const char *TextureLoader::getSkyString(
     {
         const tEntity *entity = entities->getEntity(i);
 
-        if (strcmp(entity->className, "worldspawn") != 0)
+        if (entity->className != "worldspawn")
         {
             continue;
         }
 
         for (int j = 0; j < entity->valueCount; j++)
         {
-            if (strcmp(entity->values[j].key, "skyname") != 0)
+            if (entity->values[j].key != "skyname")
             {
                 continue;
             }
@@ -281,5 +282,6 @@ const char *TextureLoader::getSkyString(
         }
     }
 
-    return nullptr;
+    static std::string empty("");
+    return empty;
 }

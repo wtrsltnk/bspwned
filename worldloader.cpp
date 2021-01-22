@@ -9,7 +9,6 @@
 
 #include "lightmap.h"
 #include "opengl.h"
-#include "stringcompare.h"
 #include "textureloader.h"
 #include <iostream>
 #include <spdlog/spdlog.h>

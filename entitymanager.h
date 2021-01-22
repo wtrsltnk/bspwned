@@ -8,14 +8,17 @@
 #ifndef _ENTITYMANAGER_H
 #define _ENTITYMANAGER_H
 
+#include "tokenizer.h"
 #include "types.h"
 
 #include <glm/glm.hpp>
+#include <vector>
 
 class EntityManager
 {
 public:
     EntityManager();
+
     virtual ~EntityManager();
 
     bool parseFromBSPEntityData(
@@ -33,8 +36,10 @@ public:
     glm::vec3 getPlayerStart() const;
 
 private:
-    class PIMPL;
-    PIMPL *pimpl;
+    std::vector<tEntity *> mEntities;
+
+    bool parseEntity(
+        Tokenizer &tok);
 };
 
 #endif /* _ENTITYMANAGER_H */

@@ -7,7 +7,6 @@
 
 #include "wadloader.h"
 
-#include "stringcompare.h"
 #include <iostream>
 #include <string.h>
 

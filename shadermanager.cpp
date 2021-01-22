@@ -9,7 +9,6 @@
 
 #include "interfaces.h"
 #include "opengl.h"
-#include "stringcompare.h"
 #include <stdlib.h>
 #include <vector>
 

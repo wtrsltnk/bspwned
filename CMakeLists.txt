@@ -33,7 +33,6 @@ target_sources(Bspwned
         staticrenderer.h
         stb_image.cpp
         stb_truetype.cpp
-        targa.cpp
         textureloader.cpp
         textureloader.h
         tokenizer.cpp

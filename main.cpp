@@ -399,6 +399,10 @@ int main(
         return 0;
     }
 
+    glm::vec3 start = renderer.getPlayerStart();
+    start *= -1;
+    cam.SetPosition(start);
+
     glm::vec3 rot = glm::vec3(0.0f);
 
     glfwInit();

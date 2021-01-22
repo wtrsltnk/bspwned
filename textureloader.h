@@ -40,10 +40,10 @@ private:
     void openWadFiles(
         const std::string &wadString);
 
-    const char *getWadString(
+    const std::string &getWadString(
         EntityManager *entities);
 
-    const char *getSkyString(
+    const std::string &getSkyString(
         EntityManager *entities);
 
     bool readTexture(

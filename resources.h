@@ -17,11 +17,6 @@
 #include <stdio.h>
 #include <string>
 
-bool openTarga(
-    Texture &texture,
-    const IData *data,
-    const std::string &filename);
-
 class ResourceFile : public IData
 {
 public:
